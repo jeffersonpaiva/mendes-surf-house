@@ -135,3 +135,61 @@ UI, não é acessível pra um usuário não técnico) — é uma ferramenta de
 desenvolvedor/administrador.
 
 **Arquivos relacionados:** `scripts/importar-alunos.js`.
+
+---
+
+### Decisão: captação de alunos reais via Google Forms → planilha → script de importação existente (2026-08-17)
+
+**Motivo:** o usuário quer parar de digitar manualmente nome/telefone de cada
+aluno real. Em vez de digitar tudo, decidiu abrir um Google Forms no grupo
+pedindo Nome completo + Telefone, e usar a planilha de respostas ligada ao
+formulário como entrada do script `scripts/importar-alunos.js` que já existe.
+Decisão explícita do usuário: quer **revisar as respostas antes de importar**
+(não é uma importação automática/direta).
+
+**Impacto:** nenhuma mudança de código foi necessária — o script já suporta
+esse caso (aluno sem saldo inicial, saldo fica zero até o admin lançar aulas
+depois manualmente). Só foi preciso alinhar convenção: as perguntas do Forms
+precisam se chamar exatamente `Nome completo` e `Telefone do aluno` (viram
+cabeçalho de coluna), e a aba de respostas no Google Sheets precisa ser
+renomeada para `Alunos` (nome que o script procura via
+`workbook.Sheets['Alunos']`). Guia completo em `docs/importacao-google-forms.md`.
+Ainda não executado — o Google Forms em si não foi criado até o fim desta
+sessão.
+
+**Arquivos relacionados:** `scripts/importar-alunos.js`,
+`docs/importacao-google-forms.md`, `importacao-alunos-template.xlsx` (raiz do
+repo, fora do Git).
+
+---
+
+### Decisão: Área do Aluno com agendamento ("marcar aula") é a próxima grande frente, mas só depois de fechar as pendências do admin (2026-08-17)
+
+**Motivo:** a pedido do usuário, foi produzido um mockup visual (não
+funcional) de uma tela onde o aluno logado veria o próprio saldo e poderia
+marcar horário de aula sozinho — um conceito de **agendamento futuro**,
+diferente de tudo que existe hoje no sistema (hoje só existe "dar baixa em
+aula", que registra uma aula já realizada, sem noção de data/horário
+futuro nem de agenda/capacidade). Ao apresentar o mockup, ficou claro que
+essa funcionalidade exige duas peças que ainda não existem: uma tabela nova
+de agendamentos, e RLS com diferenciação de papel (pendência já conhecida,
+necessária pra um login de aluno só ver/mexer nos próprios dados). O usuário,
+de forma explícita, decidiu que essa é a próxima grande frente do projeto,
+mas **só depois de finalizar as pendências que já estavam na fila para a tela
+de admin** (editar aluno, regra de inatividade, relatório financeiro — ver
+`docs/memory/CURRENT_STATE.md`).
+
+**Impacto:** nenhum código do app foi alterado. Existe um mockup HTML
+estático de referência (`docs/mockups/tela-aluno-mockup.html`, dados
+fictícios, sem conexão com Supabase) que reflete a identidade visual atual do
+app (mesmas variáveis de cor/fonte de `src/styles.css`) e serve de ponto de
+partida visual quando essa frente for retomada. **Quando essa frente for
+iniciada de fato**, será necessário: desenhar e documentar em `DATABASE.md` a
+tabela de agendamentos (dia, horário, capacidade/vaga, status, vínculo com
+`alunos` e possivelmente com `movimentacoes` no momento em que a aula marcada
+vira aula realizada), e resolver a pendência de RLS por papel antes de
+qualquer login de aluno existir de verdade.
+
+**Arquivos relacionados:** `docs/mockups/tela-aluno-mockup.html`,
+`docs/memory/CURRENT_STATE.md` (seção "Próxima grande frente"),
+`docs/memory/DATABASE.md` (schema ainda não tem tabela de agendamento).

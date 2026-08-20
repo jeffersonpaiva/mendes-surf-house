@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mendes Surf House — Área do Aluno (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: #123B4D;
+  --bg-deep: #0D2E3C;
+  --surface: #1B4E64;
+  --surface-2: #215970;
+  --lime: #E3F81D;
+  --text: #F3F7EC;
+  --text-muted: #9FBAC4;
+  --green: #6FE0A6;
+  --green-bg: #16473D;
+  --coral: #FF8B70;
+  --coral-bg: #4A2A2C;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  background: var(--bg-deep);
+  font-family: 'Inter', sans-serif;
+  display:flex; justify-content:center;
+  min-height:100vh;
+}
+.mockup-note{
+  position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  background:#0009; color:var(--text-muted); font-size:11px; padding:6px 12px;
+  border-radius:20px; z-index:20; letter-spacing:0.3px; pointer-events:none;
+}
+.phone{
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: var(--bg);
+  position: relative;
+  display:flex; flex-direction:column;
+}
+
+/* ---------- HEADER ---------- */
+header{
+  padding: 28px 22px 20px;
+  background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg) 100%);
+}
+.brand{ display:flex; align-items:center; justify-content:space-between; }
+.brand-name{
+  font-family:'Archivo', sans-serif; font-weight:800; font-size:20px;
+  letter-spacing: 0.5px; color: var(--lime); line-height:1;
+}
+.brand-sub{ font-size:10px; letter-spacing:3px; color: var(--text-muted); margin-top:3px; }
+.avatar-top{
+  width:38px; height:38px; border-radius:50%; background: var(--surface-2); color: var(--lime);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Archivo',sans-serif; font-weight:700; font-size:13px;
+}
+.wave{
+  margin-top:22px; height:14px; width:100%;
+  background: repeating-linear-gradient(115deg, var(--lime) 0 26px, transparent 26px 40px);
+  clip-path: polygon(0 60%, 5% 40%, 10% 60%, 15% 40%, 20% 60%, 25% 40%, 30% 60%, 35% 40%, 40% 60%, 45% 40%, 50% 60%, 55% 40%, 60% 60%, 65% 40%, 70% 60%, 75% 40%, 80% 60%, 85% 40%, 90% 60%, 95% 40%, 100% 60%, 100% 100%, 0 100%);
+  opacity:0.9;
+}
+.greeting{ padding: 18px 22px 0; font-size:14px; color:var(--text); }
+.greeting b{ font-weight:700; }
+
+/* ---------- SALDO HERO ---------- */
+.saldo-hero{
+  margin: 16px 22px 0; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+  border-radius: 22px; padding: 22px 20px; position:relative; overflow:hidden;
+}
+.saldo-hero .tag{ font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+.saldo-hero .num-row{ display:flex; align-items:baseline; gap:8px; margin-top:6px; }
+.saldo-hero .num{ font-family:'Archivo',sans-serif; font-weight:800; font-size:46px; color:var(--lime); line-height:1; }
+.saldo-hero .num-label{ font-size:14px; color:var(--text); font-weight:600; }
+.saldo-hero .pacote{ font-size:12px; color:var(--text-muted); margin-top:10px; }
+.progress-track{ margin-top:14px; height:8px; border-radius:6px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.progress-fill{ height:100%; background:var(--lime); border-radius:6px; }
+.progress-legend{ display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:6px; }
+
+/* ---------- CTA ---------- */
+.cta-row{ padding: 16px 22px 0; }
+.cta-btn{
+  width:100%; background: var(--lime); color: var(--bg-deep); border:none; border-radius:14px;
+  padding: 15px; font-size:15px; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.cta-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+.cta-hint{ text-align:center; font-size:11px; color:var(--text-muted); margin-top:8px; }
+
+/* ---------- SECTIONS ---------- */
+.section-title{ padding: 24px 22px 8px; display:flex; align-items:center; justify-content:space-between; }
+.section-title h2{ font-family:'Archivo',sans-serif; font-size:15px; font-weight:700; color:var(--text); }
+.section-title .see-all{ font-size:12px; color:var(--lime); font-weight:600; }
+
+.aula-card{
+  margin: 0 22px 10px; background: var(--surface); border-radius: 16px; padding: 14px 16px;
+  display:flex; align-items:center; gap:14px;
+}
+.aula-date{
+  width:46px; height:46px; border-radius:12px; background: var(--surface-2); flex-shrink:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.aula-date .d{ font-family:'Archivo',sans-serif; font-weight:800; font-size:16px; color:var(--lime); line-height:1; }
+.aula-date .m{ font-size:9px; color:var(--text-muted); text-transform:uppercase; margin-top:2px; }
+.aula-info{ flex:1; min-width:0; }
+.aula-info .t{ font-size:13px; font-weight:600; color:var(--text); }
+.aula-info .s{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+.aula-cancel{
+  background:none; border:none; color:var(--coral); font-size:11px; font-weight:600;
+  cursor:pointer; padding:6px 8px; white-space:nowrap;
+}
+.empty-state{ margin:0 22px; color:var(--text-muted); font-size:13px; text-align:center; padding: 18px 0; background: var(--surface); border-radius:16px; }
+
+.list{ padding: 0 22px 116px; display:flex; flex-direction:column; gap:0; }
+.historico-row{
+  display:flex; align-items:center; justify-content:space-between; padding: 12px 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.historico-desc{ font-size:13px; color: var(--text); font-weight:500; }
+.historico-data{ font-size:11px; color: var(--text-muted); margin-top:2px; }
+.historico-valor{ font-size:14px; font-weight:700; font-family:'Archivo',sans-serif; }
+.historico-valor.positivo{ color: var(--green); }
+.historico-valor.negativo{ color: var(--coral); }
+
+/* ---------- FAB ---------- */
+.fab{
+  position:fixed; right: calc(50% - 240px + 22px); bottom:96px;
+  width:56px; height:56px; border-radius:50%; background: var(--lime); color: var(--bg-deep);
+  display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;
+  box-shadow: 0 8px 20px rgba(227,248,29,0.35); cursor:pointer; border:none; z-index:4;
+}
+@media (max-width: 480px){ .fab{ right: 22px; } }
+
+/* ---------- NAV ---------- */
+nav{
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+  background: var(--bg-deep); display:flex; justify-content:space-around; align-items:center;
+  padding: 14px 0 20px; border-top: 1px solid rgba(255,255,255,0.05); z-index:3;
+}
+.nav-item{ display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-muted); font-size:10px; cursor:pointer; background:none; border:none; font-family:'Inter',sans-serif; }
+.nav-item.active{ color: var(--lime); }
+.nav-dot{ font-size:16px; }
+
+/* ---------- BOTTOM SHEET ---------- */
+.overlay{
+  position:fixed; inset:0; background: rgba(5,15,20,0.55);
+  display:none; align-items:flex-end; justify-content:center; z-index:10;
+}
+.overlay.open{ display:flex; }
+.sheet{
+  width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
+  background: var(--bg); border-radius: 24px 24px 0 0; padding: 10px 22px 28px;
+}
+.sheet .grip{ width:36px; height:4px; background:var(--surface-2); border-radius:2px; margin: 6px auto 18px; }
+.sheet h3{ font-family:'Archivo',sans-serif; color:var(--text); font-size:16px; margin-bottom:4px; }
+.sheet .sub{ font-size:12px; color:var(--text-muted); margin-bottom:18px; }
+
+.field-label{ display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin: 16px 0 8px; }
+.date-scroll{ display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
+.date-chip{
+  flex-shrink:0; width:56px; padding:10px 0; border-radius:14px; background:var(--surface);
+  display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; border:1.5px solid transparent;
+}
+.date-chip .dow{ font-size:10px; color:var(--text-muted); text-transform:uppercase; }
+.date-chip .dnum{ font-family:'Archivo',sans-serif; font-weight:700; font-size:16px; color:var(--text); }
+.date-chip.selected{ background:var(--green-bg); border-color:var(--lime); }
+.date-chip.selected .dnum, .date-chip.selected .dow{ color:var(--lime); }
+
+.slot-grid{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; }
+.slot-btn{
+  padding:10px 0; border-radius:10px; background:var(--surface); color:var(--text);
+  font-size:13px; font-weight:600; text-align:center; cursor:pointer; border:1.5px solid transparent;
+  font-family:'Inter',sans-serif;
+}
+.slot-btn.selected{ background:var(--green-bg); border-color:var(--lime); color:var(--lime); }
+.slot-btn.full{ opacity:0.35; cursor:not-allowed; text-decoration:line-through; }
+
+.saldo-info{ font-size:12px; color: var(--text-muted); margin-top: 16px; }
+.sheet-actions{ display:flex; gap:10px; margin-top:22px; }
+.primary-btn{
+  flex:1; background: var(--lime); color: var(--bg-deep); border:none; border-radius:10px;
+  padding: 12px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif;
+}
+.primary-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+.secondary-btn{
+  flex:1; background: var(--surface); color: var(--text); border:none; border-radius:10px;
+  padding: 12px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
+}
+.confirm-state{ display:none; text-align:center; padding: 30px 10px 10px; }
+.confirm-state .icon{
+  width:64px; height:64px; border-radius:50%; background:var(--green-bg); color:var(--green);
+  display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 16px;
+}
+.confirm-state h3{ margin-bottom:6px; }
+.confirm-state p{ font-size:13px; color:var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="mockup-note">MOCKUP visual — dados fictícios, não conectado ao Supabase</div>
+
+<div class="phone">
+  <header>
+    <div class="brand">
+      <div>
+        <div class="brand-name">MENDES</div>
+        <div class="brand-sub">SURF HOUSE</div>
+      </div>
+      <div class="avatar-top">CA</div>
+    </div>
+    <div class="wave"></div>
+  </header>
+
+  <div class="greeting">Olá, <b>Carla</b> 👋</div>
+
+  <div class="saldo-hero">
+    <div class="tag">Suas aulas</div>
+    <div class="num-row">
+      <div class="num" id="saldoNum">6</div>
+      <div class="num-label">aulas disponíveis</div>
+    </div>
+    <div class="pacote">Pacote atual: Isaaaa Internacional (8 aulas)</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:25%"></div></div>
+    <div class="progress-legend"><span>2 realizadas</span><span>8 no pacote</span></div>
+  </div>
+
+  <div class="cta-row">
+    <button class="cta-btn" id="btnMarcar" onclick="abrirSheet()">🏄 Marcar aula</button>
+    <div class="cta-hint">Você tem aulas disponíveis para marcar</div>
+  </div>
+
+  <div class="section-title">
+    <h2>Próximas aulas</h2>
+  </div>
+  <div id="proximasAulas">
+    <div class="aula-card" data-id="1">
+      <div class="aula-date"><div class="d">18</div><div class="m">Ago</div></div>
+      <div class="aula-info">
+        <div class="t">Sábado, 08:00</div>
+        <div class="s">Praia do Futuro · Instrutor: equipe Mendes</div>
+      </div>
+      <button class="aula-cancel" onclick="cancelarAula(this)">Cancelar</button>
+    </div>
+    <div class="aula-card" data-id="2">
+      <div class="aula-date"><div class="d">21</div><div class="m">Ago</div></div>
+      <div class="aula-info">
+        <div class="t">Terça, 16:00</div>
+        <div class="s">Praia do Futuro · Instrutor: equipe Mendes</div>
+      </div>
+      <button class="aula-cancel" onclick="cancelarAula(this)">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <h2>Histórico recente</h2>
+    <span class="see-all">Ver tudo</span>
+  </div>
+  <div class="list">
+    <div class="historico-row">
+      <div>
+        <div class="historico-desc">Aula realizada</div>
+        <div class="historico-data">05/08/2026 · AULA</div>
+      </div>
+      <div class="historico-valor negativo">-1</div>
+    </div>
+    <div class="historico-row">
+      <div>
+        <div class="historico-desc">Aula realizada</div>
+        <div class="historico-data">29/07/2026 · AULA</div>
+      </div>
+      <div class="historico-valor negativo">-1</div>
+    </div>
+    <div class="historico-row">
+      <div>
+        <div class="historico-desc">Isaaaa Internacional</div>
+        <div class="historico-data">20/07/2026 · PACOTE</div>
+      </div>
+      <div class="historico-valor positivo">+8</div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="abrirSheet()">🏄</button>
+
+  <nav>
+    <div class="nav-item active"><div class="nav-dot">⌂</div>Início</div>
+    <div class="nav-item"><div class="nav-dot">🏄</div>Marcar</div>
+    <div class="nav-item"><div class="nav-dot">📋</div>Histórico</div>
+    <div class="nav-item"><div class="nav-dot">👤</div>Perfil</div>
+  </nav>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="grip"></div>
+
+    <div id="formState">
+      <h3>Marcar aula</h3>
+      <div class="sub">Escolha um dia e horário disponível</div>
+
+      <label class="field-label">Dia</label>
+      <div class="date-scroll" id="dateScroll"></div>
+
+      <label class="field-label">Horário</label>
+      <div class="slot-grid" id="slotGrid">
+        <div class="slot-btn" onclick="selecionarSlot(this)">08:00</div>
+        <div class="slot-btn" onclick="selecionarSlot(this)">09:30</div>
+        <div class="slot-btn full">11:00</div>
+        <div class="slot-btn" onclick="selecionarSlot(this)">14:00</div>
+        <div class="slot-btn" onclick="selecionarSlot(this)">16:00</div>
+        <div class="slot-btn full">17:30</div>
+      </div>
+
+      <div class="saldo-info">Você tem 6 aulas disponíveis. Marcar não desconta aula até a aula ser realizada.</div>
+
+      <div class="sheet-actions">
+        <button type="button" class="secondary-btn" onclick="fecharSheet()">Cancelar</button>
+        <button type="button" class="primary-btn" id="btnConfirmar" disabled onclick="confirmarAula()">Confirmar</button>
+      </div>
+    </div>
+
+    <div class="confirm-state" id="confirmState">
+      <div class="icon">✓</div>
+      <h3>Aula marcada!</h3>
+      <p id="confirmTexto">Você vai receber um lembrete antes do horário.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let dataEscolhida = null, horaEscolhida = null;
+
+function montarDatas(){
+  const scroll = document.getElementById('dateScroll');
+  scroll.innerHTML = '';
+  const base = new Date(2026, 7, 15); // 15 ago 2026, âncora fixa do mockup
+  for(let i=0;i<7;i++){
+    const d = new Date(base);
+    d.setDate(base.getDate()+i);
+    const chip = document.createElement('div');
+    chip.className = 'date-chip' + (i===2 ? ' selected' : '');
+    chip.innerHTML = `<div class="dow">${dias[d.getDay()]}</div><div class="dnum">${d.getDate()}</div>`;
+    chip.onclick = () => {
+      document.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      dataEscolhida = `${String(d.getDate()).padStart(2,'0')}/${meses[d.getMonth()]}`;
+      atualizarBotaoConfirmar();
+    };
+    if(i===2) dataEscolhida = `${String(d.getDate()).padStart(2,'0')}/${meses[d.getMonth()]}`;
+    scroll.appendChild(chip);
+  }
+}
+montarDatas();
+
+function selecionarSlot(el){
+  document.querySelectorAll('.slot-btn').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  horaEscolhida = el.textContent.trim();
+  atualizarBotaoConfirmar();
+}
+
+function atualizarBotaoConfirmar(){
+  document.getElementById('btnConfirmar').disabled = !(dataEscolhida && horaEscolhida);
+}
+
+function abrirSheet(){
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('formState').style.display = 'block';
+  document.getElementById('confirmState').style.display = 'none';
+}
+function fecharSheet(){
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function confirmarAula(){
+  document.getElementById('formState').style.display = 'none';
+  const confirmState = document.getElementById('confirmState');
+  confirmState.style.display = 'block';
+  document.getElementById('confirmTexto').textContent =
+    `${dataEscolhida}, ${horaEscolhida} · Praia do Futuro`;
+
+  const lista = document.getElementById('proximasAulas');
+  const card = document.createElement('div');
+  card.className = 'aula-card';
+  card.innerHTML = `
+    <div class="aula-date"><div class="d">${dataEscolhida.split('/')[0]}</div><div class="m">${dataEscolhida.split('/')[1]}</div></div>
+    <div class="aula-info">
+      <div class="t">${horaEscolhida}</div>
+      <div class="s">Praia do Futuro · Instrutor: equipe Mendes</div>
+    </div>
+    <button class="aula-cancel" onclick="cancelarAula(this)">Cancelar</button>
+  `;
+  lista.prepend(card);
+
+  setTimeout(fecharSheet, 1100);
+}
+
+function cancelarAula(btn){
+  btn.closest('.aula-card').remove();
+}
+</script>
+
+</body>
+</html>
