@@ -5,7 +5,58 @@ mais recente do projeto.
 
 ## Última situação conhecida
 
-*(Atualizado em 2026-08-17, sessão de continuidade via Claude/Cowork.)*
+*(Atualizado em 2026-08-25, sessão de continuidade via Claude/Cowork — segunda
+atualização do dia.)*
+
+**Planilha de importação real pronta, aguardando o usuário rodar o script.**
+O usuário enviou a planilha preenchida (baseada no template) com 46 alunos.
+Foram encontrados e corrigidos dois problemas antes de gerar o arquivo final:
+a linha de exemplo do template ainda estava presente (removida), e "Allison
+Bruno" / "Allison Bruno Couza Costa" tinham o mesmo telefone — confirmado com
+o usuário que é a mesma pessoa, mantido só "Allison Bruno Couza Costa".
+Resultado: **`importacao-alunos.xlsx` na raiz do repo, 45 alunos reais,
+formato exato que `scripts/importar-alunos.js` espera** (aba `Alunos`,
+colunas corretas). Todos entram com "Aulas disponíveis agora" em branco —
+decisão do usuário, ele vai lançar as aulas de cada um manualmente depois via
+"Inserir pacote/aula avulsa". **Esse arquivo tem dado real (nome/telefone) e
+foi adicionado ao `.gitignore` — não deve ser commitado.**
+
+**Falta só o usuário rodar:**
+`node scripts/importar-alunos.js importacao-alunos.xlsx` (dentro da pasta do
+projeto, vai pedir e-mail/senha de admin). Ninguém rodou isso durante a
+sessão — não tenho como confirmar que a importação de fato aconteceu no
+Supabase. **Perguntar ao retomar se isso já rodou** antes de assumir que os
+46 alunos estão no banco.
+
+**Editar aluno (pendência 2) foi implementada nesta sessão** — ver seção
+"Implementado" e detalhes logo abaixo. A importação em lote dos alunos reais
+(pendência 0) **segue sem avançar**, confirmado com o usuário no início desta
+sessão — ainda não fez o Google Forms nem rodou o script.
+
+Nesta sessão:
+
+- **`editarAluno()` em `src/lib/queries.js`**: atualiza nome, telefone,
+  responsável (nome/telefone) e status de um aluno já cadastrado. Mesma regra
+  de nome duplicado de `criarAluno()` (case/espaço-insensível), mas ignorando
+  o próprio registro na checagem — senão o aluno nunca conseguiria salvar sem
+  mudar o nome. Nunca mexe em saldo/movimentações, só nos dados cadastrais.
+- **`src/components/ModalEditarAluno.jsx` (novo)**: bottom sheet igual ao
+  `ModalNovoAluno.jsx`, mas pré-preenchido com os dados atuais do aluno (via
+  `useEffect` que roda quando o modal abre) e sem a parte de pacote inicial
+  (edição é só dado cadastral, não financeiro).
+- **`src/components/QuickActionSheet.jsx`**: `StudentActionSheet` ganhou uma
+  quarta opção, "✏️ Editar dados", que abre o novo modal. Só existe a partir
+  do card do aluno (não tem editar pelo botão flutuante geral, porque exige
+  aluno já selecionado).
+- **`src/App.jsx`**: novo estado `'editarAluno'` em `sheetAberto`, import e
+  render do `ModalEditarAluno`, prop `onEditar` ligada no `StudentActionSheet`.
+
+Verificação feita nesta sessão: sintaxe de `queries.js` checada com
+`node --check` (passou); chaves/parênteses dos três arquivos `.jsx` alterados
+conferidos como balanceados manualmente (não foi possível rodar
+`npm install`/build real — sandbox sem acesso ao registry do npm neste
+momento). **Ainda não testado rodando o app de verdade** (`npm run dev`) — é
+o primeiro ponto a checar se algo der erro ao abrir a tela de editar aluno.
 
 App em produção (Vercel), banco em produção (Supabase), primeiro usuário admin
 criado e testado. O aluno de teste inicial já foi removido do banco (script de
@@ -79,6 +130,22 @@ Nesta sessão (sem alterar nenhum código do app):
   mostrando o saldo atual antes de confirmar.
 - **Histórico do aluno** (`ModalHistorico`): lista completa de movimentações,
   mais recente primeiro.
+- **Editar dados de um aluno** (`ModalEditarAluno`, acessado pelo menu do
+  card do aluno): nome, telefone, responsável, status. Mesma regra de nome
+  duplicado do cadastro. Não mexe em saldo/pacotes.
+- **Botão de atualizar** no cabeçalho do Dashboard (ícone ⟳, ao lado do
+  logo): chama o mesmo `recarregar()` do `App.jsx`, gira enquanto carrega e
+  fica desabilitado nesse meio-tempo. Resolve o caso relatado pelo usuário de
+  às vezes entrar no app e a lista de alunos não carregar — agora dá pra
+  tentar de novo sem precisar recarregar a página inteira. CSS em
+  `.refresh-btn` / `.refresh-icon` / `@keyframes refresh-spin` em
+  `styles.css`. **Limitação conhecida:** se o carregamento inicial travar
+  antes do Dashboard aparecer na tela (`carregandoDados` true com `alunos`
+  vazio — a tela mostra só "Carregando dados..."), o botão não existe ainda
+  nesse estado específico porque o Dashboard nem chegou a renderizar. Não
+  apareceu evidência de que esse é o caso real relatado, mas se acontecer,
+  seria um ajuste pequeno adicional (mover o botão pra fora do Dashboard ou
+  dar retry nesse estado também).
 - **Regras de saldo:** nunca negativo (validado no frontend E no banco via
   trigger), pacotes somam ao saldo existente, histórico nunca é apagado.
 - **PWA:** instalável na tela do celular, ícones gerados a partir do logo da
@@ -103,20 +170,23 @@ Nesta sessão (sem alterar nenhum código do app):
 
 Em ordem aproximada do que foi discutido como prioridade:
 
-0. **Rodar a importação em lote dos alunos reais** — confirmado que ainda não
-   foi feita (ver "Última situação conhecida"). Material de apoio já entregue
-   ao usuário (template `.xlsx` + guia de Google Forms); falta o usuário criar
-   o formulário, coletar respostas e rodar `scripts/importar-alunos.js`.
+0. **Rodar a importação em lote dos alunos reais** — o usuário acabou usando
+   o template preenchido manualmente (não o fluxo de Google Forms) e me
+   mandou a planilha. Arquivo final já preparado e revisado
+   (`importacao-alunos.xlsx`, 45 alunos, na raiz do repo, fora do Git). **Só
+   falta o usuário rodar** `node scripts/importar-alunos.js importacao-alunos.xlsx`.
+   O guia de Google Forms (`docs/importacao-google-forms.md`) segue disponível
+   caso ele decida captar os próximos alunos por lá no futuro, mas não foi
+   usado desta vez.
 1. **Abas "Alunos", "Relatórios" e "Ajustes" da navegação inferior** — hoje são
    só itens visuais em `Dashboard.jsx` (`<nav>`), sem `onClick` nem rota. Só
    "Início" é funcional.
-2. **Editar dados de um aluno já cadastrado** (nome, telefone, responsável,
-   status) — hoje só existe criação, não edição. Não há tela nem função em
-   `queries.js` para isso.
+2. ~~Editar dados de um aluno já cadastrado~~ — **implementado em 2026-08-25**,
+   ver "Última situação conhecida" e "Implementado" acima.
 3. **Regra automática de inatividade** — existia na versão Apps Script (aluno
    sem movimentação há N dias vira "Inativo" sozinho, parametrizado por
    `configuracoes.dias_inatividade`). Não foi portada. Hoje `status` é 100%
-   manual.
+   manual (inclusive pelo `ModalEditarAluno` novo).
 4. **Tela de relatório financeiro** — o banco já tem `valor_pago`,
    `forma_pagamento` e a view `vw_financeiro_mensal` prontos, mas nenhuma tela
    consome isso, e os modais de compra de pacote não pedem esses dados ainda.
@@ -159,13 +229,13 @@ produto nesta sessão.
 
 ## Próximos passos recomendados
 
-1. Importação em lote dos alunos reais ainda pendente (confirmado nesta
-   sessão) — usuário vai montar o Google Forms usando `docs/importacao-google-forms.md`
-   como guia; quando as respostas estiverem prontas, rodar
-   `scripts/importar-alunos.js`. Perguntar ao retomar se isso já avançou.
-2. Implementar edição de aluno (pendência 2) — é a lacuna mais básica hoje.
-   **Usuário confirmou nesta sessão que quer focar em fechar as pendências da
-   tela de admin antes de avançar na Área do Aluno/agendamento.**
+1. Rodar `node scripts/importar-alunos.js importacao-alunos.xlsx` — arquivo
+   já pronto e revisado (45 alunos), só falta o usuário executar. Perguntar
+   ao retomar se isso já rodou antes de assumir que há alunos reais no banco.
+2. ~~Implementar edição de aluno~~ — **feito em 2026-08-25.** Testar no
+   `npm run dev` do usuário assim que possível (ainda não rodou num bundler
+   real). Usuário confirmou que quer focar em fechar as pendências da tela de
+   admin antes de avançar na Área do Aluno/agendamento.
 3. Portar a regra de inatividade automática (pendência 3), reaproveitando o
    parâmetro `configuracoes.dias_inatividade` que já existe no banco.
 4. Construir a aba "Relatórios" consumindo `vw_financeiro_mensal`, e adicionar

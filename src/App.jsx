@@ -4,6 +4,7 @@ import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import { QuickActionSheet, StudentActionSheet } from './components/QuickActionSheet'
 import ModalNovoAluno from './components/ModalNovoAluno'
+import ModalEditarAluno from './components/ModalEditarAluno'
 import ModalPacote from './components/ModalPacote'
 import ModalBaixaAula from './components/ModalBaixaAula'
 import ModalHistorico from './components/ModalHistorico'
@@ -16,7 +17,7 @@ export default function App() {
   const [carregandoDados, setCarregandoDados] = useState(true)
 
   const [alunoSelecionado, setAlunoSelecionado] = useState(null)
-  const [sheetAberto, setSheetAberto] = useState(null) // 'menuGeral' | 'aluno' | 'novoAluno' | 'pacote' | 'baixa' | 'historico'
+  const [sheetAberto, setSheetAberto] = useState(null) // 'menuGeral' | 'aluno' | 'novoAluno' | 'editarAluno' | 'pacote' | 'baixa' | 'historico'
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSessao(data.session))
@@ -63,6 +64,8 @@ export default function App() {
           kpis={kpis}
           onAbrirAluno={(aluno) => { setAlunoSelecionado(aluno); setSheetAberto('aluno') }}
           onAbrirMenuGeral={() => setSheetAberto('menuGeral')}
+          onAtualizar={recarregar}
+          atualizando={carregandoDados}
         />
       )}
 
@@ -81,11 +84,19 @@ export default function App() {
         onBaixa={() => setSheetAberto('baixa')}
         onPacote={() => setSheetAberto('pacote')}
         onHistorico={() => setSheetAberto('historico')}
+        onEditar={() => setSheetAberto('editarAluno')}
       />
 
       <ModalNovoAluno
         open={sheetAberto === 'novoAluno'}
         onClose={fecharTudo}
+        onSucesso={recarregar}
+      />
+
+      <ModalEditarAluno
+        open={sheetAberto === 'editarAluno'}
+        onClose={fecharTudo}
+        aluno={alunoSelecionado}
         onSucesso={recarregar}
       />
 

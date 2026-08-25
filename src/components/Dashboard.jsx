@@ -4,7 +4,7 @@ function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
 }
 
-export default function Dashboard({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral }) {
+export default function Dashboard({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando }) {
   const [busca, setBusca] = useState('')
   const [kpisAbertos, setKpisAbertos] = useState(true)
 
@@ -20,6 +20,16 @@ export default function Dashboard({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral
             <div className="brand-name">MENDES</div>
             <div className="brand-sub">SURF HOUSE</div>
           </div>
+          <button
+            type="button"
+            className={`refresh-btn ${atualizando ? 'spinning' : ''}`}
+            onClick={onAtualizar}
+            disabled={atualizando}
+            aria-label="Atualizar lista de alunos"
+            title="Atualizar"
+          >
+            <span className="refresh-icon">⟳</span>
+          </button>
         </div>
         <div className="wave" />
       </header>

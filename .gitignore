@@ -2,3 +2,6 @@ node_modules
 dist
 .env
 .DS_Store
+
+# planilha com dados reais de alunos (nome/telefone) — não versionar
+importacao-alunos.xlsx

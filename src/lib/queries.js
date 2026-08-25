@@ -113,6 +113,46 @@ export async function criarAluno({ nome, telefone, nomeResponsavel, telefoneResp
 }
 
 /**
+ * Atualiza os dados cadastrais de um aluno já existente (nome, telefone,
+ * responsável, status, observação). Nunca mexe em saldo/movimentações — isso
+ * continua só passando por registrarMovimentacao().
+ * Mesma regra de nome duplicado de criarAluno(), mas ignorando o próprio
+ * registro (senão o aluno nunca conseguiria salvar sem mudar o nome).
+ */
+export async function editarAluno({ alunoId, nome, telefone, nomeResponsavel, telefoneResponsavel, status, observacao }) {
+  if (!alunoId) throw new Error('Aluno não informado.')
+
+  const nomeLimpo = nome.trim()
+  if (!nomeLimpo) throw new Error('Informe o nome do aluno.')
+
+  const { data: existentes, error: erroBusca } = await supabase
+    .from('alunos')
+    .select('id')
+    .ilike('nome', nomeLimpo)
+  if (erroBusca) throw erroBusca
+  if (existentes && existentes.some((a) => a.id !== alunoId)) {
+    throw new Error(`Já existe um aluno cadastrado como "${nomeLimpo}". Verifique antes de continuar.`)
+  }
+
+  const { data: aluno, error } = await supabase
+    .from('alunos')
+    .update({
+      nome: nomeLimpo,
+      telefone: telefone || null,
+      nome_responsavel: nomeResponsavel || null,
+      telefone_responsavel: telefoneResponsavel || null,
+      status: status || 'Ativo',
+      observacao: observacao || null
+    })
+    .eq('id', alunoId)
+    .select()
+    .single()
+  if (error) throw error
+
+  return aluno
+}
+
+/**
  * Grava uma movimentação, validando saldo suficiente para saídas.
  * O banco também tem um trigger de segurança contra saldo negativo —
  * esta checagem aqui é só pra dar uma mensagem amigável mais rápido.

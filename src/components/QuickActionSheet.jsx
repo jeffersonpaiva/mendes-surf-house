@@ -25,7 +25,7 @@ export function QuickActionSheet({ open, onClose, onBaixa, onPacote, onNovoAluno
 }
 
 /** Menu contextual de um aluno específico, aberto ao tocar no card dele. */
-export function StudentActionSheet({ open, onClose, aluno, onBaixa, onPacote, onHistorico }) {
+export function StudentActionSheet({ open, onClose, aluno, onBaixa, onPacote, onHistorico, onEditar }) {
   if (!aluno) return null
   const iniciais = aluno.nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
 
@@ -43,6 +43,7 @@ export function StudentActionSheet({ open, onClose, aluno, onBaixa, onPacote, on
       <ActionRow first icon="🏄" title="Dar baixa em aula" subtitle="Registrar aula realizada por este aluno" onClick={onBaixa} />
       <ActionRow icon="💳" title="Inserir pacote" subtitle="Pacote ou aula avulsa para este aluno" onClick={onPacote} />
       <ActionRow icon="📋" title="Ver histórico completo" subtitle="Todas as movimentações do aluno" onClick={onHistorico} />
+      <ActionRow icon="✏️" title="Editar dados" subtitle="Nome, telefone, responsável e status" onClick={onEditar} />
     </BottomSheet>
   )
 }
