@@ -219,6 +219,26 @@ export async function registrarAula({ alunoId, data, quantidade, observacao }) {
   })
 }
 
+/**
+ * Dá baixa em lote (1 aula por aluno), usada na tela de colar a lista do
+ * WhatsApp e confirmar quem fez aula. Roda uma baixa de cada vez e NÃO para
+ * no primeiro erro — cada aluno vira um resultado independente (sucesso ou
+ * falha, ex: saldo insuficiente), pra um problema pontual não travar o
+ * restante do lote.
+ */
+export async function registrarAulaLote({ alunoIds, data, observacao }) {
+  const resultados = []
+  for (const alunoId of alunoIds) {
+    try {
+      const mov = await registrarAula({ alunoId, data, quantidade: 1, observacao })
+      resultados.push({ alunoId, sucesso: true, mov })
+    } catch (err) {
+      resultados.push({ alunoId, sucesso: false, erro: err.message })
+    }
+  }
+  return resultados
+}
+
 /** Histórico completo de um aluno, mais recente primeiro. */
 export async function fetchHistoricoAluno(alunoId) {
   const { data, error } = await supabase

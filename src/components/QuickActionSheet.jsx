@@ -13,11 +13,12 @@ function ActionRow({ icon, title, subtitle, onClick, first }) {
 }
 
 /** Menu geral, aberto pelo botão flutuante (+). Inclui "Novo aluno". */
-export function QuickActionSheet({ open, onClose, onBaixa, onPacote, onNovoAluno }) {
+export function QuickActionSheet({ open, onClose, onBaixa, onBaixaLote, onPacote, onNovoAluno }) {
   return (
     <BottomSheet open={open} onClose={onClose}>
       <h3>O que você quer fazer?</h3>
       <ActionRow first icon="🏄" title="Dar baixa em aula" subtitle="Registrar aula realizada" onClick={onBaixa} />
+      <ActionRow icon="📋" title="Dar baixa em lote" subtitle="Colar lista do WhatsApp e confirmar quem fez aula" onClick={onBaixaLote} />
       <ActionRow icon="💳" title="Inserir pacote" subtitle="Pacote ou aula avulsa" onClick={onPacote} />
       <ActionRow icon="👤" title="Novo aluno" subtitle="Cadastrar aluno" onClick={onNovoAluno} />
     </BottomSheet>

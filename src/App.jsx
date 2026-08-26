@@ -9,6 +9,7 @@ import ModalNovoAluno from './components/ModalNovoAluno'
 import ModalEditarAluno from './components/ModalEditarAluno'
 import ModalPacote from './components/ModalPacote'
 import ModalBaixaAula from './components/ModalBaixaAula'
+import ModalBaixaLote from './components/ModalBaixaLote'
 import ModalHistorico from './components/ModalHistorico'
 import { fetchDashboard, fetchAulasNoMes, calcularKpis } from './lib/queries'
 
@@ -20,7 +21,7 @@ export default function App() {
   const [carregandoDados, setCarregandoDados] = useState(true)
 
   const [alunoSelecionado, setAlunoSelecionado] = useState(null)
-  const [sheetAberto, setSheetAberto] = useState(null) // 'menuGeral' | 'aluno' | 'novoAluno' | 'editarAluno' | 'pacote' | 'baixa' | 'historico'
+  const [sheetAberto, setSheetAberto] = useState(null) // 'menuGeral' | 'aluno' | 'novoAluno' | 'editarAluno' | 'pacote' | 'baixa' | 'baixaLote' | 'historico'
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSessao(data.session))
@@ -80,6 +81,7 @@ export default function App() {
         open={sheetAberto === 'menuGeral'}
         onClose={fecharTudo}
         onBaixa={() => { setAlunoSelecionado(null); setSheetAberto('baixa') }}
+        onBaixaLote={() => { setAlunoSelecionado(null); setSheetAberto('baixaLote') }}
         onPacote={() => { setAlunoSelecionado(null); setSheetAberto('pacote') }}
         onNovoAluno={() => setSheetAberto('novoAluno')}
       />
@@ -118,6 +120,13 @@ export default function App() {
         open={sheetAberto === 'baixa'}
         onClose={fecharTudo}
         aluno={alunoSelecionado}
+        onSucesso={recarregar}
+      />
+
+      <ModalBaixaLote
+        open={sheetAberto === 'baixaLote'}
+        onClose={fecharTudo}
+        alunos={alunos}
         onSucesso={recarregar}
       />
 

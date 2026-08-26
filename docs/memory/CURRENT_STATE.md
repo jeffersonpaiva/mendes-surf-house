@@ -123,16 +123,70 @@ Vercel.
      conferidas) **e ainda NÃO commitado pelo usuário.** Ver "Próximos passos
      recomendados" abaixo.
 
+5. **Dar baixa em lote (colar lista do WhatsApp) — implementado, ainda SEM
+   teste nem commit do usuário.** Pedido novo do usuário, mostrando como
+   exemplo a lista real que circula no grupo (dia da semana, horário, um
+   nome por linha, às vezes com tags como "exp"/"ONE TO ONE"/emoji). Antes
+   de codar, 3 decisões foram confirmadas com o usuário:
+   - **Colagem:** o admin cola só o trecho de UM dia/horário por vez (não a
+     semana inteira) — mais simples e sem ambiguidade de qual bloco é
+     "hoje".
+   - **Nomes sem match confiável:** ficam de fora do lote automaticamente,
+     com aviso no final (não trava o fluxo pedindo pra vincular manualmente
+     ali na hora).
+   - **Data:** o admin pode escolher a data da baixa (não é travado em
+     "hoje"), pra cobrir o caso de lançar atrasado.
+   - **`src/lib/matchNomes.js`** (novo): faz o parsing e o casamento de
+     nomes, sem nenhuma chamada ao banco.
+     `extrairNomesDaLista(texto)` remove linhas de cabeçalho (dia da semana,
+     linha que começa com dígito = horário tipo "5:40"/"15:20🔒"/"6h", linha
+     entre parênteses tipo instrução) e limpa tags conhecidas de cada nome
+     (emoji, "(experimental)"/"exp", "ONE TO ONE"), com dedupe.
+     `casarNomeComAlunos(nome, alunos)` compara por token: cada palavra do
+     nome colado precisa ser prefixo de alguma palavra do nome cadastrado
+     (cobre "Lyara Peres" -> "Lyara Maria Peres Ximenes"). Só considera
+     match se achar exatamente 1 aluno — 0 ou mais de 1 (ambíguo) vira "não
+     reconhecido", nunca arrisca a adivinhação. Testado manualmente com o
+     texto de exemplo do usuário antes de integrar na tela (inclusive caso
+     de ambiguidade proposital com dois "Ivo").
+   - **`registrarAulaLote()`** em `queries.js` (novo): recebe uma lista de
+     `alunoId`s + data + observação, chama o `registrarAula()` que já
+     existia (mesma trava de saldo insuficiente) uma vez por aluno, e NÃO
+     para no primeiro erro — cada aluno vira um resultado independente
+     (sucesso ou motivo da falha), pra um problema pontual (ex: aluno sem
+     saldo) não travar o lote inteiro.
+   - **`src/components/ModalBaixaLote.jsx`** (novo): um modal só, com 3
+     etapas internas (`colar` → `revisar` → `resultado`). Etapa 1: campo de
+     data + textarea pra colar a lista. Etapa 2: lista com checkbox (todos
+     os reconhecidos vêm pré-marcados) mostrando "nome cadastrado" +
+     "nome como veio na lista" + selo "Sem saldo" se for o caso, e embaixo
+     um aviso coral com os nomes não reconhecidos (incluindo o motivo:
+     ambíguo entre quais alunos, ou não encontrado). Etapa 3: resumo de
+     quantos deram certo/errado, com o motivo de cada falha. Reaproveita
+     `BottomSheet` (então já funciona como diálogo no desktop de graça) e
+     as classes de formulário existentes (`field-label`, `field-input`,
+     `form-msg`, `sheet-actions`).
+   - **Entrada no app:** novo item "📋 Dar baixa em lote" no menu geral
+     (`QuickActionSheet`, botão flutuante "+" / "+ Nova ação" no desktop) —
+     só no menu geral, não no menu de um aluno específico, porque é uma
+     ação em massa. Novo estado `'baixaLote'` em `sheetAberto` no
+     `App.jsx`, que passa a lista `alunos` já carregada (mesma fonte que o
+     Dashboard usa) direto pro modal, sem round-trip extra ao banco.
+   - **Ainda NÃO testado no navegador de verdade** (só a lógica de
+     parsing/matching foi validada isoladamente com Node, fora do React) **e
+     ainda NÃO commitado pelo usuário.**
+
 **Commit/deploy:** o commit da edição de aluno + botão de atualizar +
-importação (itens 1–3 acima) já foi feito pelo usuário via GitHub Desktop,
-com push e deploy no Vercel confirmados. **A versão desktop (item 4) é
-código novo desta mesma sessão, escrito DEPOIS desse commit — ainda não foi
-commitada nem testada.** Arquivos da versão desktop, todos pendentes de
-commit: `src/lib/useIsDesktop.js` (novo), `src/components/DashboardDesktop.jsx`
-(novo), `src/components/BottomSheet.jsx`, `src/App.jsx`, `src/styles.css`.
-**Perguntar ao retomar se o usuário já testou (`npm run dev`, redimensionar a
-janela ou abrir no notebook) e se já commitou** antes de assumir que a versão
-desktop está em produção.
+importação (itens 1–3) e a versão desktop (item 4) — status de cada um
+descrito acima. **O item 5 (baixa em lote) é código novo desta mesma sessão,
+também ainda não commitado nem testado.** Arquivos pendentes de commit hoje,
+somando itens 4 e 5: `src/lib/useIsDesktop.js` (novo),
+`src/components/DashboardDesktop.jsx` (novo), `src/components/BottomSheet.jsx`,
+`src/lib/matchNomes.js` (novo), `src/components/ModalBaixaLote.jsx` (novo),
+`src/lib/queries.js`, `src/components/QuickActionSheet.jsx`, `src/App.jsx`,
+`src/styles.css`. **Perguntar ao retomar se o usuário já testou (`npm run
+dev`) e se já commitou** antes de assumir que a versão desktop e/ou a baixa
+em lote estão em produção.
 
 Também foi entregue nesta sessão (arquivos ainda no repo, sem código ligado
 ao app): mockup visual de uma futura "Área do Aluno" com agendamento
@@ -142,6 +196,12 @@ repo como referência visual, mesmo já tendo virado código de verdade.
 
 ## Implementado
 
+- **Dar baixa em lote** (`ModalBaixaLote`, pelo menu geral "+"): cola a lista
+  de um dia/horário do WhatsApp, o sistema casa cada nome com um aluno
+  cadastrado (`src/lib/matchNomes.js`), o admin confirma por checkbox e
+  escolhe a data, e só então lança 1 aula de baixa por aluno confirmado
+  (`registrarAulaLote` em `queries.js`). Nomes sem match confiável ficam de
+  fora com aviso, nunca são adivinhados. **Ainda sem teste no navegador.**
 - **Autenticação:** login por e-mail/senha via Supabase Auth. Sem self-signup —
   usuários criados manualmente no painel do Supabase.
 - **Dashboard:** KPIs (alunos ativos, aulas disponíveis, aulas no mês, sem aulas)
@@ -239,9 +299,11 @@ dono do produto.
 
 ## Próximos passos recomendados
 
-1. Testar de verdade no navegador (`npm run dev`) os dois recursos novos
-   desta sessão: editar aluno e botão de atualizar. Ainda não foram vistos
-   rodando, só revisados no código.
+1. Testar de verdade no navegador (`npm run dev`): editar aluno, botão de
+   atualizar, versão desktop (redimensionar a janela ou abrir no notebook) e
+   dar baixa em lote (colar uma lista real do WhatsApp e ver se reconhece os
+   alunos certos). Nenhum desses foi visto rodando ainda, só revisados no
+   código.
 2. Conferir no Dashboard que os ~45 alunos importados aparecem certos (nome,
    telefone, status "Ativo", saldo zero) antes de começar a lançar as aulas
    de cada um manualmente.

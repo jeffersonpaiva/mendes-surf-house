@@ -268,3 +268,26 @@ nav{
   border-radius:20px; padding:26px 28px; border:1px solid rgba(255,255,255,0.06);
 }
 .dialog-box h3{ font-family:'Archivo',sans-serif; color:var(--text); font-size:16px; margin-bottom:14px; }
+
+/* ---------- dar baixa em lote ---------- */
+.lote-textarea{ font-family:'Inter',sans-serif; font-size:13px; min-height:160px; line-height:1.5; }
+.lote-resumo{ font-size:12px; color:var(--text-muted); margin-top:10px; }
+.lote-lista{ display:flex; flex-direction:column; margin-top:10px; max-height:320px; overflow-y:auto; }
+.lote-item{
+  display:flex; align-items:center; gap:10px; padding:10px 0;
+  border-top:1px solid rgba(255,255,255,0.06); cursor:pointer;
+}
+.lote-item:first-child{ border-top:none; }
+.lote-item input[type="checkbox"]{ width:18px; height:18px; flex-shrink:0; accent-color: var(--lime); }
+.lote-item-info{ flex:1; min-width:0; }
+.lote-item-info .nome{ font-size:13px; font-weight:600; color:var(--text); }
+.lote-item-info .origem{ font-size:11px; color:var(--text-muted); margin-top:1px; }
+.lote-aviso{ margin-top:16px; padding:12px 14px; border-radius:12px; background:var(--coral-bg); }
+.lote-aviso .titulo{ font-size:12px; font-weight:700; color:var(--coral); margin-bottom:6px; }
+.lote-aviso ul{ margin:0; padding-left:18px; }
+.lote-aviso li{ font-size:12px; color:var(--coral); margin-bottom:3px; }
+.lote-resultado-item{
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:9px 0; border-top:1px solid rgba(255,255,255,0.06); font-size:13px; color:var(--text);
+}
+.lote-resultado-item:first-child{ border-top:none; }
