@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from './supabaseClient'
+import { useIsDesktop } from './lib/useIsDesktop'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
+import DashboardDesktop from './components/DashboardDesktop'
 import { QuickActionSheet, StudentActionSheet } from './components/QuickActionSheet'
 import ModalNovoAluno from './components/ModalNovoAluno'
 import ModalEditarAluno from './components/ModalEditarAluno'
@@ -11,6 +13,7 @@ import ModalHistorico from './components/ModalHistorico'
 import { fetchDashboard, fetchAulasNoMes, calcularKpis } from './lib/queries'
 
 export default function App() {
+  const isDesktop = useIsDesktop()
   const [sessao, setSessao] = useState(undefined) // undefined = ainda carregando
   const [alunos, setAlunos] = useState([])
   const [kpis, setKpis] = useState({ alunosAtivos: 0, aulasDisponiveis: 0, aulasNoMes: 0, semAulas: 0 })
@@ -54,19 +57,23 @@ export default function App() {
     return <Login />
   }
 
+  const props = {
+    alunos,
+    kpis,
+    onAbrirAluno: (aluno) => { setAlunoSelecionado(aluno); setSheetAberto('aluno') },
+    onAbrirMenuGeral: () => setSheetAberto('menuGeral'),
+    onAtualizar: recarregar,
+    atualizando: carregandoDados
+  }
+
   return (
-    <div className="phone">
+    <div className={isDesktop ? 'app-shell' : 'phone'}>
       {carregandoDados && alunos.length === 0 ? (
         <div className="loading-screen">Carregando dados...</div>
+      ) : isDesktop ? (
+        <DashboardDesktop {...props} />
       ) : (
-        <Dashboard
-          alunos={alunos}
-          kpis={kpis}
-          onAbrirAluno={(aluno) => { setAlunoSelecionado(aluno); setSheetAberto('aluno') }}
-          onAbrirMenuGeral={() => setSheetAberto('menuGeral')}
-          onAtualizar={recarregar}
-          atualizando={carregandoDados}
-        />
+        <Dashboard {...props} />
       )}
 
       <QuickActionSheet

@@ -61,21 +61,84 @@ Vercel.
      (`importacao-alunos-template.xlsx`, ainda no repo) seguem disponíveis
      caso o usuário capte novos alunos assim no futuro.
 
-**Commit/deploy:** usuário commitou pelo GitHub Desktop (não pelo terminal) e
-confirmou push + deploy novo no Vercel. Não tenho o hash do commit nem o que
-exatamente foi incluído no `git add` dele — os arquivos alterados nesta sessão
-foram: `src/lib/queries.js`, `src/components/ModalEditarAluno.jsx` (novo),
-`src/components/QuickActionSheet.jsx`, `src/App.jsx`,
-`src/components/Dashboard.jsx`, `src/styles.css`, `.gitignore`,
-`docs/memory/CURRENT_STATE.md`, `package-lock.json` (atualizado pelo
-`npm install`). **Ainda não testado abrindo o app de verdade no navegador**
-(só a lógica foi revisada/checada sintaticamente) — se aparecer algum
-problema visual ou de comportamento no editar aluno ou no botão de
-atualizar, é o primeiro lugar a olhar.
+4. **Versão desktop responsiva — implementada (mesmo dia, depois do commit
+   acima), ainda SEM commit do usuário.** Pedido novo do usuário: precisa
+   usar o app pelo notebook, não só pelo celular. Antes de codar, foi feito
+   um mockup HTML estático (`docs/mockups/mockup-desktop.html`, um único
+   arquivo que troca de layout sozinho por media query — serviu pra alinhar
+   o visual antes de mexer no app de verdade) e só depois, com aprovação do
+   usuário, veio a implementação real:
+   - **Abordagem:** um app só, um deploy só — o layout troca sozinho
+     conforme a largura da tela (`≥ 860px` = desktop), sem apps separados.
+     Breakpoint centralizado em `src/lib/useIsDesktop.js`
+     (`DESKTOP_BREAKPOINT`), um hook que usa `window.matchMedia` e reage a
+     resize.
+   - **`src/components/BottomSheet.jsx`** (peça-chave): agora é responsivo —
+     no mobile continua subindo como bottom sheet (como sempre foi); no
+     desktop vira um diálogo centralizado (`.dialog-box`). Como todos os
+     modais do app (`ModalNovoAluno`, `ModalEditarAluno`, `ModalPacote`,
+     `ModalBaixaAula`, `ModalHistorico`, `QuickActionSheet`,
+     `StudentActionSheet`) usam esse componente por baixo, **todos ganharam o
+     comportamento desktop de graça, sem nenhum precisar ser tocado ou
+     duplicado.**
+   - **`src/components/DashboardDesktop.jsx`** (novo): sidebar de navegação
+     fixa (só "Início" funcional, igual à nav mobile hoje), topbar com busca
+     + botão de atualizar + botão "+ Nova ação" (abre o mesmo
+     `QuickActionSheet` do FAB mobile), KPIs em linha, e a lista de alunos
+     como **tabela** (Aluno/Telefone/Pacote/Saldo/Status) em vez de cards.
+     Clicar numa linha abre o mesmo `StudentActionSheet` de sempre — que no
+     desktop já aparece como diálogo centralizado.
+   - **`src/App.jsx`**: novo `isDesktop = useIsDesktop()`; escolhe
+     `<Dashboard>` ou `<DashboardDesktop>` conforme o modo, passando os
+     mesmos props pros dois (nenhuma duplicação de estado/lógica); o wrapper
+     raiz vira `.app-shell` (sem o `max-width:480px` do `.phone`) quando
+     desktop.
+   - **CSS novo em `styles.css`**: bloco `sidebar`/`side-nav`/`side-link`,
+     `topbar`/`d-search`/`btn-primary-d`, `kpi-row`/`kpi-card`,
+     `table-card`/`d-table`, `.overlay.dialog`/`.dialog-box`. Não usei
+     `@media` pra essas classes de propósito — quem decide se elas existem no
+     DOM é o React (via `isDesktop`), então não têm como conflitar com o CSS
+     mobile mesmo sem media query.
+   - **Simplificação consciente em relação ao mockup:** o mockup tinha um
+     painel lateral (`detail-panel`) deslizando da direita com ações e um
+     mini-resumo de saldo, construído do zero. Na implementação real, optei
+     por **reaproveitar o `StudentActionSheet` já existente** (que agora
+     também vira diálogo centralizado no desktop) em vez de construir um
+     componente de painel novo — menos código, zero duplicação de lógica,
+     mesma fonte de verdade que o mobile usa. Fica mais simples que o
+     mockup, mas sem o efeito "painel lateral com saldo em destaque". Se o
+     usuário achar que faz falta depois de usar, dá pra evoluir isso depois
+     sem quebrar nada.
+   - **Um bug pego e corrigido durante a implementação** (não chegou a subir
+     quebrado): o `<nav>` da sidebar ia colidir com o seletor CSS global
+     `nav{ position:fixed; ... }` (pensado só pro menu inferior do mobile) —
+     troquei a sidebar pra usar `<div className="side-nav">` em vez de
+     `<nav>`, evitando o conflito sem precisar tocar no CSS mobile existente.
+     Também corrigi o aninhamento de `brand-name`/`brand-sub` na sidebar
+     (usar `.sidebar-brand` em vez de reaproveitar `.brand`, que é
+     `display:flex; justify-content:space-between` no mobile — reaproveitar
+     ia empurrar "MENDES" e "SURF HOUSE" pra lados opostos em vez de
+     empilhado).
+   - **Ainda NÃO testado no navegador de verdade** (só sintaxe/chaves
+     conferidas) **e ainda NÃO commitado pelo usuário.** Ver "Próximos passos
+     recomendados" abaixo.
+
+**Commit/deploy:** o commit da edição de aluno + botão de atualizar +
+importação (itens 1–3 acima) já foi feito pelo usuário via GitHub Desktop,
+com push e deploy no Vercel confirmados. **A versão desktop (item 4) é
+código novo desta mesma sessão, escrito DEPOIS desse commit — ainda não foi
+commitada nem testada.** Arquivos da versão desktop, todos pendentes de
+commit: `src/lib/useIsDesktop.js` (novo), `src/components/DashboardDesktop.jsx`
+(novo), `src/components/BottomSheet.jsx`, `src/App.jsx`, `src/styles.css`.
+**Perguntar ao retomar se o usuário já testou (`npm run dev`, redimensionar a
+janela ou abrir no notebook) e se já commitou** antes de assumir que a versão
+desktop está em produção.
 
 Também foi entregue nesta sessão (arquivos ainda no repo, sem código ligado
 ao app): mockup visual de uma futura "Área do Aluno" com agendamento
 (`docs/mockups/tela-aluno-mockup.html`) — ver "Próxima grande frente" abaixo.
+O mockup do desktop (`docs/mockups/mockup-desktop.html`) também segue no
+repo como referência visual, mesmo já tendo virado código de verdade.
 
 ## Implementado
 
