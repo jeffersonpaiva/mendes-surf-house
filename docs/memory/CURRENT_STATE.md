@@ -3,6 +3,12 @@
 **Leia este arquivo primeiro** ao retomar o desenvolvimento. Ele é o checkpoint
 mais recente do projeto.
 
+**Como o usuário retoma a conversa:** a sessão/conversa fica salva com o
+nome "Continuar projeto mendes-surf-house" — quando ele voltar com essa
+frase (ou "leia a memória do projeto e continue de onde paramos"), é o sinal
+pra ler este arquivo inteiro e seguir a partir da última situação conhecida
+abaixo, sem precisar perguntar de novo o que foi feito.
+
 ## Última situação conhecida
 
 *(Atualizado em 2026-08-25, sessão de continuidade via Claude/Cowork.)*
