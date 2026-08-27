@@ -1,4 +1,5 @@
 import BottomSheet from './BottomSheet'
+import { IconWaves, IconClipboardList, IconCard, IconUserPlus, IconEdit } from './Icons'
 
 function ActionRow({ icon, title, subtitle, onClick, first }) {
   return (
@@ -17,10 +18,10 @@ export function QuickActionSheet({ open, onClose, onBaixa, onBaixaLote, onPacote
   return (
     <BottomSheet open={open} onClose={onClose}>
       <h3>O que você quer fazer?</h3>
-      <ActionRow first icon="🏄" title="Dar baixa em aula" subtitle="Registrar aula realizada" onClick={onBaixa} />
-      <ActionRow icon="📋" title="Dar baixa em lote" subtitle="Colar lista do WhatsApp e confirmar quem fez aula" onClick={onBaixaLote} />
-      <ActionRow icon="💳" title="Inserir pacote" subtitle="Pacote ou aula avulsa" onClick={onPacote} />
-      <ActionRow icon="👤" title="Novo aluno" subtitle="Cadastrar aluno" onClick={onNovoAluno} />
+      <ActionRow first icon={<IconWaves />} title="Dar baixa em aula" subtitle="Registrar aula realizada" onClick={onBaixa} />
+      <ActionRow icon={<IconClipboardList />} title="Dar baixa em lote" subtitle="Colar lista do WhatsApp e confirmar quem fez aula" onClick={onBaixaLote} />
+      <ActionRow icon={<IconCard />} title="Inserir pacote" subtitle="Pacote ou aula avulsa" onClick={onPacote} />
+      <ActionRow icon={<IconUserPlus />} title="Novo aluno" subtitle="Cadastrar aluno" onClick={onNovoAluno} />
     </BottomSheet>
   )
 }
@@ -41,10 +42,10 @@ export function StudentActionSheet({ open, onClose, aluno, onBaixa, onPacote, on
           </div>
         </div>
       </div>
-      <ActionRow first icon="🏄" title="Dar baixa em aula" subtitle="Registrar aula realizada por este aluno" onClick={onBaixa} />
-      <ActionRow icon="💳" title="Inserir pacote" subtitle="Pacote ou aula avulsa para este aluno" onClick={onPacote} />
-      <ActionRow icon="📋" title="Ver histórico completo" subtitle="Todas as movimentações do aluno" onClick={onHistorico} />
-      <ActionRow icon="✏️" title="Editar dados" subtitle="Nome, telefone, responsável e status" onClick={onEditar} />
+      <ActionRow first icon={<IconWaves />} title="Dar baixa em aula" subtitle="Registrar aula realizada por este aluno" onClick={onBaixa} />
+      <ActionRow icon={<IconCard />} title="Inserir pacote" subtitle="Pacote ou aula avulsa para este aluno" onClick={onPacote} />
+      <ActionRow icon={<IconClipboardList />} title="Ver histórico completo" subtitle="Todas as movimentações do aluno" onClick={onHistorico} />
+      <ActionRow icon={<IconEdit />} title="Editar dados" subtitle="Nome, telefone, responsável e status" onClick={onEditar} />
     </BottomSheet>
   )
 }

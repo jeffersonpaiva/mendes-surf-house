@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { IconUsers, IconChart, IconSettings, IconSearch } from './Icons'
 
 function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
@@ -29,9 +30,9 @@ export default function DashboardDesktop({ alunos, kpis, onAbrirAluno, onAbrirMe
         </div>
         <div className="side-nav">
           <div className="side-link active"><span className="ic">⌂</span>Início</div>
-          <div className="side-link"><span className="ic">👥</span>Alunos</div>
-          <div className="side-link"><span className="ic">📊</span>Relatórios</div>
-          <div className="side-link"><span className="ic">⚙</span>Ajustes</div>
+          <div className="side-link"><span className="ic"><IconUsers size={16} /></span>Alunos</div>
+          <div className="side-link"><span className="ic"><IconChart size={16} /></span>Relatórios</div>
+          <div className="side-link"><span className="ic"><IconSettings size={16} /></span>Ajustes</div>
         </div>
       </aside>
 
@@ -39,7 +40,7 @@ export default function DashboardDesktop({ alunos, kpis, onAbrirAluno, onAbrirMe
         <div className="topbar">
           <h1>Início</h1>
           <div className="d-search">
-            <span className="ic">🔍</span>
+            <span className="ic"><IconSearch size={15} /></span>
             <input
               placeholder="Buscar aluno..."
               value={busca}

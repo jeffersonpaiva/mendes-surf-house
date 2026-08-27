@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { IconUsers, IconChart, IconSettings } from './Icons'
 
 function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
@@ -85,9 +86,9 @@ export default function Dashboard({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral
 
       <nav>
         <div className="nav-item active"><div className="nav-dot">⌂</div>Início</div>
-        <div className="nav-item"><div className="nav-dot">👥</div>Alunos</div>
-        <div className="nav-item"><div className="nav-dot">📊</div>Relatórios</div>
-        <div className="nav-item"><div className="nav-dot">⚙</div>Ajustes</div>
+        <div className="nav-item"><div className="nav-dot"><IconUsers size={16} /></div>Alunos</div>
+        <div className="nav-item"><div className="nav-dot"><IconChart size={16} /></div>Relatórios</div>
+        <div className="nav-item"><div className="nav-dot"><IconSettings size={16} /></div>Ajustes</div>
       </nav>
     </>
   )
