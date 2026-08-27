@@ -184,6 +184,18 @@ textarea.field-input{ resize:vertical; }
   flex:1; background: var(--surface); color: var(--text); border:none; border-radius:10px;
   padding: 12px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
 }
+.secondary-btn:disabled{ opacity:0.5; cursor:default; }
+
+/* ---------- PAGINAÇÃO (listas paginadas por cursor) ---------- */
+/* Mobile / dentro de modal: botão "Carregar mais" centralizado, sem ocupar
+   a largura toda (differente de .sheet-actions, que é flex:1). */
+.load-more-wrap{ text-align:center; margin-top:18px; }
+.load-more-wrap .secondary-btn{ flex:none; padding:11px 24px; }
+
+/* Desktop: "Anterior / Página N / Próxima", abaixo da tabela. */
+.d-pagination{ display:flex; align-items:center; justify-content:center; gap:16px; margin-top:18px; }
+.d-pagination .secondary-btn{ flex:none; padding:9px 20px; }
+.d-pagination-info{ font-size:12.5px; color:var(--text-muted); min-width:64px; text-align:center; }
 
 /* ---------- HISTÓRICO ---------- */
 .historico-row{

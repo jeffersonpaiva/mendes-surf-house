@@ -61,17 +61,59 @@ pelo administrador no painel do Supabase (Authentication → Users).
 
 ### 2. Carregar o Dashboard
 
-`App.jsx.recarregar()` chama, em paralelo:
-- `fetchDashboard()` → `select * from vw_dashboard_alunos` (já vem com saldo,
-  situação do pacote e pacote atual calculados)
-- `fetchAulasNoMes()` → soma de `saida` em `movimentacoes` do tipo `AULA` desde
-  o dia 1 do mês corrente
+Duas fontes de dados independentes, carregadas separadamente:
 
-e monta os KPIs localmente com `calcularKpis()`.
+- **KPIs + roster para "baixa em lote":** `App.jsx.recarregar()` chama, em
+  paralelo, `fetchDashboardKpis()` (RPC `fn_dashboard_kpis`, calcula os 4
+  indicadores do topo direto no Postgres — não baixa a tabela de alunos
+  inteira) e `fetchRosterParaLote()` (lista enxuta id/nome/saldo de TODOS os
+  alunos, usada só pelo `ModalBaixaLote` pra casar nomes colados do
+  WhatsApp — ver seção 2.1 sobre por que essa lista não é paginada).
+- **Lista de alunos visível (mobile e desktop):** `Dashboard.jsx` /
+  `DashboardDesktop.jsx` buscam seus próprios dados, de forma independente
+  do que foi descrito acima, através do hook `usePaginatedQuery` — 20 por
+  vez, busca por nome direto no banco. Ver seção 2.1.
 
-`recarregar()` é chamado após login, e como callback `onSucesso` de toda ação que
-grava dado (criar aluno, inserir pacote, dar baixa) — não há cache nem
-invalidação seletiva, o Dashboard inteiro é recarregado a cada mudança.
+`recarregar()` é chamado após login, e como callback `onSucesso` de toda ação
+que grava dado (criar aluno, inserir pacote, dar baixa) — não há cache nem
+invalidação seletiva. Ele não recarrega mais a lista visível diretamente
+(ela busca os próprios dados); em vez disso incrementa `refreshToken`
+(estado em `App.jsx`, passado como prop), que o hook de paginação observa
+pra se atualizar sozinho, preservando a busca/página atual do usuário.
+
+### 2.1 Paginação por cursor (keyset) — padrão reutilizável
+
+Duas listas do app usam o mesmo padrão, via o hook genérico
+`src/lib/usePaginatedQuery.js`:
+
+- **Lista de alunos** (`Dashboard.jsx` mobile, com botão "Carregar mais";
+  `DashboardDesktop.jsx`, com "Anterior/Próxima") — config
+  `ALUNOS_LISTA_CONFIG` em `queries.js`.
+- **Histórico de um aluno** (`ModalHistorico.jsx`, com "Carregar mais") —
+  config `HISTORICO_LISTA_CONFIG` em `queries.js`.
+
+Mecânica: `queries.js` expõe `buscarPaginaKeyset()`, a única função que fala
+com o Supabase pra isso (mantém a regra "só `queries.js` chama
+`supabase.from(...)`" — o hook em `src/lib/` só orquestra estado/efeitos, a
+query em si vive em `queries.js`). A ordenação de cada lista é composta (ex:
+`nome, id`) e usada tanto no `ORDER BY` quanto na condição do cursor
+(`WHERE (nome, id) > (valor_cursor)`, montada com `.or()`/`and()` do
+PostgREST) — o `id` como desempate garante que a paginação nunca pula nem
+duplica registro, mesmo com valores repetidos na coluna principal. Busca é
+sempre `ilike` (case-insensitive, "contém") direto no banco, com debounce de
+350ms, e reinicia a paginação da primeira página a cada mudança de termo —
+nunca filtra só os itens já carregados no React.
+
+Uma lista **não** entra nesse padrão: `fetchRosterParaLote()` (usada pelo
+`ModalBaixaLote` pra casar nomes colados do WhatsApp contra o cadastro
+inteiro) continua buscando todos os alunos de uma vez, de propósito — é uma
+ferramenta de reconhecimento de texto, não uma lista navegável, e paginar
+ali faria o reconhecimento falhar silenciosamente pra qualquer aluno fora
+da primeira página.
+
+Índices que sustentam essa paginação (busca por trigram + ordenação/keyset)
+estão em `scripts/sql/2026-08-27-paginacao-indices-kpis.sql` — ver
+`docs/memory/DATABASE.md`.
 
 ### 3. Cadastrar aluno (`ModalNovoAluno.jsx` → `criarAluno()`)
 
@@ -106,9 +148,10 @@ Usada pelos fluxos 4 e 5. Sempre:
    recalcular saldo depois).
 4. Insere a linha em `movimentacoes`.
 
-### 7. Ver histórico (`ModalHistorico.jsx` → `fetchHistoricoAluno()`)
+### 7. Ver histórico (`ModalHistorico.jsx` → `usePaginatedQuery` + `HISTORICO_LISTA_CONFIG`)
 
-Lista todas as movimentações de um aluno, mais recente primeiro. Somente leitura.
+Movimentações de um aluno, mais recente primeiro, paginadas por cursor (20
+por vez, botão "Carregar mais") — ver seção 2.1. Somente leitura.
 
 ## Importação em lote (fora do app, script separado)
 

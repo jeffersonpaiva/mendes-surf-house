@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { IconUsers, IconChart, IconSettings, IconSearch } from './Icons'
+import { IconHome, IconUsers, IconChart, IconSettings, IconSearch } from './Icons'
+import { usePaginatedQuery } from '../lib/usePaginatedQuery'
+import { ALUNOS_LISTA_CONFIG } from '../lib/queries'
 
 function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
@@ -8,18 +9,29 @@ function iniciaisDe(nome) {
 /**
  * Versão desktop do Dashboard: sidebar de navegação + topbar + KPIs em linha
  * + tabela de alunos (em vez da lista de cards do mobile). Usa exatamente os
- * mesmos dados e handlers do Dashboard mobile (alunos, kpis, onAbrirAluno,
- * onAbrirMenuGeral, onAtualizar, atualizando) — quem decide qual dos dois
- * renderizar é o App.jsx, via useIsDesktop(). Clicar num aluno abre o mesmo
- * StudentActionSheet de sempre (que agora vira diálogo centralizado no
- * desktop, graças ao BottomSheet responsivo) — não duplica esse menu aqui.
+ * mesmos dados e handlers do Dashboard mobile (kpis, onAbrirAluno,
+ * onAbrirMenuGeral, onAtualizar, atualizando, refreshToken) — quem decide
+ * qual dos dois renderizar é o App.jsx, via useIsDesktop(). Clicar num aluno
+ * abre o mesmo StudentActionSheet de sempre (que agora vira diálogo
+ * centralizado no desktop, graças ao BottomSheet responsivo) — não duplica
+ * esse menu aqui.
+ *
+ * A tabela é paginada por cursor (20 por vez), com Anterior/Próxima em vez
+ * do "Carregar mais" do mobile — troca a página inteira em vez de acumular,
+ * que é o padrão mais natural numa tabela densa de desktop.
  */
-export default function DashboardDesktop({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando }) {
-  const [busca, setBusca] = useState('')
-
-  const alunosFiltrados = alunos.filter((a) =>
-    a.nome.toLowerCase().includes(busca.toLowerCase())
-  )
+export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando, refreshToken }) {
+  const {
+    itens: alunosFiltrados,
+    carregando: carregandoLista,
+    temMais,
+    temPaginaAnterior,
+    indicePagina,
+    busca,
+    setBusca,
+    proximaPagina,
+    paginaAnterior
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 20, sinalRecarregar: refreshToken })
 
   return (
     <div className="desktop-shell">
@@ -29,7 +41,7 @@ export default function DashboardDesktop({ alunos, kpis, onAbrirAluno, onAbrirMe
           <div className="brand-sub">SURF HOUSE</div>
         </div>
         <div className="side-nav">
-          <div className="side-link active"><span className="ic">⌂</span>Início</div>
+          <div className="side-link active"><span className="ic"><IconHome size={16} /></span>Início</div>
           <div className="side-link"><span className="ic"><IconUsers size={16} /></span>Alunos</div>
           <div className="side-link"><span className="ic"><IconChart size={16} /></span>Relatórios</div>
           <div className="side-link"><span className="ic"><IconSettings size={16} /></span>Ajustes</div>
@@ -82,7 +94,14 @@ export default function DashboardDesktop({ alunos, kpis, onAbrirAluno, onAbrirMe
                 </tr>
               </thead>
               <tbody>
-                {alunosFiltrados.length === 0 && (
+                {carregandoLista && alunosFiltrados.length === 0 && (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px 0' }}>
+                      Carregando...
+                    </td>
+                  </tr>
+                )}
+                {!carregandoLista && alunosFiltrados.length === 0 && (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px 0' }}>
                       Nenhum aluno encontrado.
@@ -105,6 +124,16 @@ export default function DashboardDesktop({ alunos, kpis, onAbrirAluno, onAbrirMe
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="d-pagination">
+            <button type="button" className="secondary-btn" onClick={paginaAnterior} disabled={!temPaginaAnterior || carregandoLista}>
+              Anterior
+            </button>
+            <span className="d-pagination-info">Página {indicePagina}</span>
+            <button type="button" className="secondary-btn" onClick={proximaPagina} disabled={!temMais || carregandoLista}>
+              Próxima
+            </button>
           </div>
         </div>
       </div>

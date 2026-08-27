@@ -24,6 +24,16 @@ function IconBase({ size = 20, strokeWidth = 1.8, children, ...props }) {
   )
 }
 
+/** Nav "Início" — casa. */
+export function IconHome(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 11.2 12 4l8 7.2" />
+      <path d="M6 10v9.3a1 1 0 0 0 1 1h3v-6.3h4v6.3h3a1 1 0 0 0 1-1V10" />
+    </IconBase>
+  )
+}
+
 /** Botão de fechar modal (X). */
 export function IconClose(props) {
   return (

@@ -11,14 +11,24 @@ import ModalPacote from './components/ModalPacote'
 import ModalBaixaAula from './components/ModalBaixaAula'
 import ModalBaixaLote from './components/ModalBaixaLote'
 import ModalHistorico from './components/ModalHistorico'
-import { fetchDashboard, fetchAulasNoMes, calcularKpis } from './lib/queries'
+import { fetchDashboardKpis, fetchRosterParaLote } from './lib/queries'
 
 export default function App() {
   const isDesktop = useIsDesktop()
   const [sessao, setSessao] = useState(undefined) // undefined = ainda carregando
-  const [alunos, setAlunos] = useState([])
+  // `alunosParaLote`: lista completa (id/nome/saldo), só pra "Dar baixa em
+  // lote" casar nomes colados do WhatsApp — a lista VISÍVEL do Dashboard
+  // agora é paginada e busca seus próprios dados (ver Dashboard.jsx /
+  // DashboardDesktop.jsx + usePaginatedQuery), não depende mais deste estado.
+  const [alunosParaLote, setAlunosParaLote] = useState([])
   const [kpis, setKpis] = useState({ alunosAtivos: 0, aulasDisponiveis: 0, aulasNoMes: 0, semAulas: 0 })
   const [carregandoDados, setCarregandoDados] = useState(true)
+  const [primeiraCargaCompleta, setPrimeiraCargaCompleta] = useState(false)
+  // Incrementado a cada `recarregar()` bem-sucedido — as listas paginadas
+  // (Dashboard/DashboardDesktop) observam esse valor pra se atualizarem
+  // sozinhas quando algo muda em outra tela (novo aluno, baixa, etc.),
+  // preservando a busca/página que o usuário já tinha aberto.
+  const [refreshToken, setRefreshToken] = useState(0)
 
   const [alunoSelecionado, setAlunoSelecionado] = useState(null)
   const [sheetAberto, setSheetAberto] = useState(null) // 'menuGeral' | 'aluno' | 'novoAluno' | 'editarAluno' | 'pacote' | 'baixa' | 'baixaLote' | 'historico'
@@ -32,13 +42,15 @@ export default function App() {
   const recarregar = useCallback(async () => {
     setCarregandoDados(true)
     try {
-      const [listaAlunos, aulasNoMes] = await Promise.all([fetchDashboard(), fetchAulasNoMes()])
-      setAlunos(listaAlunos)
-      setKpis(calcularKpis(listaAlunos, aulasNoMes))
+      const [kpisCalculados, roster] = await Promise.all([fetchDashboardKpis(), fetchRosterParaLote()])
+      setKpis(kpisCalculados)
+      setAlunosParaLote(roster)
+      setRefreshToken((t) => t + 1)
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
     } finally {
       setCarregandoDados(false)
+      setPrimeiraCargaCompleta(true)
     }
   }, [])
 
@@ -59,17 +71,17 @@ export default function App() {
   }
 
   const props = {
-    alunos,
     kpis,
     onAbrirAluno: (aluno) => { setAlunoSelecionado(aluno); setSheetAberto('aluno') },
     onAbrirMenuGeral: () => setSheetAberto('menuGeral'),
     onAtualizar: recarregar,
-    atualizando: carregandoDados
+    atualizando: carregandoDados,
+    refreshToken
   }
 
   return (
     <div className={isDesktop ? 'app-shell' : 'phone'}>
-      {carregandoDados && alunos.length === 0 ? (
+      {carregandoDados && !primeiraCargaCompleta ? (
         <div className="loading-screen">Carregando dados...</div>
       ) : isDesktop ? (
         <DashboardDesktop {...props} />
@@ -126,7 +138,7 @@ export default function App() {
       <ModalBaixaLote
         open={sheetAberto === 'baixaLote'}
         onClose={fecharTudo}
-        alunos={alunos}
+        alunos={alunosParaLote}
         onSucesso={recarregar}
       />
 

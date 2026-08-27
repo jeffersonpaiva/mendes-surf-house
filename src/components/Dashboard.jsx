@@ -1,17 +1,26 @@
 import { useState } from 'react'
-import { IconUsers, IconChart, IconSettings } from './Icons'
+import { IconHome, IconUsers, IconChart, IconSettings } from './Icons'
+import { usePaginatedQuery } from '../lib/usePaginatedQuery'
+import { ALUNOS_LISTA_CONFIG } from '../lib/queries'
 
 function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
 }
 
-export default function Dashboard({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando }) {
-  const [busca, setBusca] = useState('')
+export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando, refreshToken }) {
   const [kpisAbertos, setKpisAbertos] = useState(true)
 
-  const alunosFiltrados = alunos.filter((a) =>
-    a.nome.toLowerCase().includes(busca.toLowerCase())
-  )
+  // Lista paginada por cursor (20 por vez), busca por nome direto no banco
+  // (não só nos alunos já carregados) — ver src/lib/usePaginatedQuery.js.
+  const {
+    itens: alunosFiltrados,
+    carregando: carregandoLista,
+    carregandoMais,
+    temMais,
+    busca,
+    setBusca,
+    carregarMais
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 20, sinalRecarregar: refreshToken })
 
   return (
     <>
@@ -61,7 +70,12 @@ export default function Dashboard({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral
       </div>
 
       <div className="list">
-        {alunosFiltrados.length === 0 && (
+        {carregandoLista && alunosFiltrados.length === 0 && (
+          <div style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>
+            Carregando...
+          </div>
+        )}
+        {!carregandoLista && alunosFiltrados.length === 0 && (
           <div style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>
             Nenhum aluno encontrado.
           </div>
@@ -80,12 +94,19 @@ export default function Dashboard({ alunos, kpis, onAbrirAluno, onAbrirMenuGeral
             </div>
           </div>
         ))}
+        {temMais && (
+          <div className="load-more-wrap">
+            <button type="button" className="secondary-btn" onClick={carregarMais} disabled={carregandoMais}>
+              {carregandoMais ? 'Carregando...' : 'Carregar mais'}
+            </button>
+          </div>
+        )}
       </div>
 
       <button className="fab" onClick={onAbrirMenuGeral}>+</button>
 
       <nav>
-        <div className="nav-item active"><div className="nav-dot">⌂</div>Início</div>
+        <div className="nav-item active"><div className="nav-dot"><IconHome size={16} /></div>Início</div>
         <div className="nav-item"><div className="nav-dot"><IconUsers size={16} /></div>Alunos</div>
         <div className="nav-item"><div className="nav-dot"><IconChart size={16} /></div>Relatórios</div>
         <div className="nav-item"><div className="nav-dot"><IconSettings size={16} /></div>Ajustes</div>

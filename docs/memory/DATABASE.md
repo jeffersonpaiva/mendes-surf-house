@@ -119,8 +119,12 @@ Usada por `fetchSaldoAluno()`.
 ### `vw_dashboard_alunos`
 
 Join de `alunos` + `vw_saldo_alunos`, adicionando `situacao_pacote`
-(`'Com aulas disponíveis'` se saldo > 0, senão `'Sem aulas'`). É a fonte direta do
-Dashboard (`fetchDashboard()` faz só um `select * from vw_dashboard_alunos`).
+(`'Com aulas disponíveis'` se saldo > 0, senão `'Sem aulas'`). É a fonte da
+lista de alunos da tela Início — **paginada por cursor, 20 por vez**, via
+`ALUNOS_LISTA_CONFIG` + `buscarPaginaKeyset()` em `queries.js` (ver seção
+"Paginação" abaixo) — e também da lista enxuta usada por "Dar baixa em
+lote" (`fetchRosterParaLote()`, sem paginação, propositalmente — ver
+comentário na função).
 
 ### `vw_financeiro_mensal`
 
@@ -135,6 +139,37 @@ não existe tela de relatório financeiro no app (ver `CURRENT_STATE.md`).
   saldo do aluno abaixo de zero. Isso existe **além** da validação que o
   frontend já faz em `queries.js` — o trigger é a garantia de que a regra vale
   mesmo se alguém escrever direto no banco (SQL Editor, outro cliente, etc.).
+
+## Paginação, índices e KPIs (2026-08-27)
+
+Script: `scripts/sql/2026-08-27-paginacao-indices-kpis.sql` — **precisa ser
+rodado no SQL Editor do Supabase** antes da paginação/KPIs novos funcionarem
+(cria índices + a função RPC abaixo; sem isso as telas quebram).
+
+- **`idx_alunos_nome_trgm`** (GIN, `pg_trgm`, em `alunos.nome`) — acelera a
+  busca `ilike '%termo%'` (curinga nas duas pontas) usada pela lista de
+  alunos. Um índice comum não serve pra esse tipo de busca.
+- **`idx_alunos_nome_id`** (btree, `alunos(nome, id)`) — ordenação/keyset
+  determinístico da lista de alunos (nome como critério, id como desempate).
+- **`idx_movimentacoes_aluno_data`** (btree,
+  `movimentacoes(aluno_id, data desc, registrado_em desc, id desc)`) —
+  filtro + ordenação + keyset do histórico de um aluno num único índice.
+- **Função `fn_dashboard_kpis()`** — os 4 indicadores do topo do Dashboard
+  (alunos ativos, aulas disponíveis, aulas do mês, sem aulas), calculados
+  com `COUNT`/`SUM` direto no Postgres via `rpc()`, em vez de baixar a
+  tabela `alunos` inteira pro navegador pra somar/contar (era assim antes:
+  `fetchDashboard()` + `fetchAulasNoMes()` + `calcularKpis()`, removidas de
+  `queries.js`).
+
+A lista de alunos da tela Início (mobile e desktop) e o histórico de um
+aluno (`ModalHistorico`) são paginados por cursor (keyset/seek method), 20
+registros por vez, com busca/filtro batendo direto no banco inteiro (não só
+nos registros já carregados) — ver `src/lib/usePaginatedQuery.js` (hook
+genérico reutilizável) + `ALUNOS_LISTA_CONFIG`/`HISTORICO_LISTA_CONFIG`/
+`buscarPaginaKeyset()` em `queries.js`. A lista completa de alunos
+(`fetchRosterParaLote()`) continua sendo buscada inteira, sem paginação —
+é usada só por "Dar baixa em lote" pra casar nomes colados do WhatsApp
+contra todo o cadastro, não é uma lista navegável.
 
 ## RLS (Row Level Security)
 
