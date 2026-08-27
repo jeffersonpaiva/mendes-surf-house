@@ -224,7 +224,7 @@ textarea.field-input{ resize:vertical; }
    (comportamento normal de grid), nada estica. */
 .alunos-grid{
   display:grid; grid-template-columns:repeat(auto-fill, 230px);
-  gap:14px; margin-top:16px;
+  gap:14px; margin:16px 22px 0;
 }
 .alunos-grid-vazio{
   grid-column:1/-1; color:var(--text-muted); font-size:14px; text-align:center; padding:24px 0;
