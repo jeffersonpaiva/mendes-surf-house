@@ -4,12 +4,6 @@ import { ALUNOS_LISTA_CONFIG } from '../lib/queries'
 import BottomSheet from './BottomSheet'
 import { IconFilter } from './Icons'
 
-// Teto usado só pra desenhar a barrinha de aulas disponíveis (não é um
-// limite de verdade) — cobre o maior pacote do catálogo hoje ("Programa
-// Performance", 14 aulas, ver docs/memory/DATABASE.md). Quem tiver mais
-// que isso só enche a barra 100%, sem quebrar o layout.
-const TETO_BARRA_AULAS = 15
-
 function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
 }
@@ -71,7 +65,7 @@ export default function AlunosGrid({ onAbrirAluno, refreshToken }) {
     busca,
     setBusca,
     carregarMais
-  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 18, filtros, sinalRecarregar: refreshToken })
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 20, filtros, sinalRecarregar: refreshToken })
 
   return (
     <div className="alunos-tela">
@@ -102,7 +96,15 @@ export default function AlunosGrid({ onAbrirAluno, refreshToken }) {
           <div className="alunos-grid-vazio">Nenhum aluno encontrado.</div>
         )}
         {alunos.map((aluno) => {
-          const pct = Math.max(0, Math.min(100, (aluno.saldo / TETO_BARRA_AULAS) * 100))
+          // `total_adquirido` vem de vw_saldo_alunos (soma de todas as
+          // aulas já compradas, histórico completo — ver DATABASE.md).
+          // Com ele dá pra mostrar "3/10 aulas" de verdade (quantas
+          // restam do total já adquirido), em vez de uma barra com teto
+          // arbitrário. Aluno que nunca comprou pacote (total 0) cai no
+          // fallback "0 aula(s)", sem dividir por zero.
+          const totalAulas = aluno.total_adquirido || 0
+          const pct = totalAulas > 0 ? Math.max(0, Math.min(100, (aluno.saldo / totalAulas) * 100)) : 0
+          const rotuloAulas = totalAulas > 0 ? `${aluno.saldo}/${totalAulas} aulas` : `${aluno.saldo} aula(s)`
           return (
             <div className="aluno-card" key={aluno.id} onClick={() => onAbrirAluno(aluno)}>
               <div className="aluno-card-top">
@@ -119,7 +121,7 @@ export default function AlunosGrid({ onAbrirAluno, refreshToken }) {
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <span className="aula-bar-num">{aluno.saldo} aula(s)</span>
+                <span className="aula-bar-num">{rotuloAulas}</span>
               </div>
             </div>
           )
