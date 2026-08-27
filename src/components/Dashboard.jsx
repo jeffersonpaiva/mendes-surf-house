@@ -11,7 +11,7 @@ function iniciaisDe(nome) {
 export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando, refreshToken, tela, onNavegar }) {
   const [kpisAbertos, setKpisAbertos] = useState(true)
 
-  // Lista paginada por cursor (20 por vez), busca por nome direto no banco
+  // Lista paginada por cursor (18 por vez), busca por nome direto no banco
   // (não só nos alunos já carregados) — ver src/lib/usePaginatedQuery.js.
   // `ativo` só liga a busca quando esta tela (Início) está de fato visível.
   const {
@@ -22,7 +22,7 @@ export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtua
     busca,
     setBusca,
     carregarMais
-  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 20, sinalRecarregar: refreshToken, ativo: tela === 'inicio' })
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 18, sinalRecarregar: refreshToken, ativo: tela === 'inicio' })
 
   return (
     <>

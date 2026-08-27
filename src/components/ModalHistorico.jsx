@@ -23,7 +23,7 @@ export default function ModalHistorico({ open, onClose, aluno }) {
     carregarMais
   } = usePaginatedQuery({
     ...HISTORICO_LISTA_CONFIG,
-    pageSize: 20,
+    pageSize: 18,
     filtros: aluno ? { aluno_id: aluno.id } : undefined,
     ativo: open && !!aluno
   })

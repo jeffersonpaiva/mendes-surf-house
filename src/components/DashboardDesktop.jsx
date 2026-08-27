@@ -35,7 +35,7 @@ export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral,
     setBusca,
     proximaPagina,
     paginaAnterior
-  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 20, sinalRecarregar: refreshToken, ativo: tela === 'inicio' })
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 18, sinalRecarregar: refreshToken, ativo: tela === 'inicio' })
 
   return (
     <div className="desktop-shell">
