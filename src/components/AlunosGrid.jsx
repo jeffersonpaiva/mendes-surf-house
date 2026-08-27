@@ -65,7 +65,7 @@ export default function AlunosGrid({ onAbrirAluno, refreshToken }) {
     busca,
     setBusca,
     carregarMais
-  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 20, filtros, sinalRecarregar: refreshToken })
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 24, filtros, sinalRecarregar: refreshToken })
 
   return (
     <div className="alunos-tela">
