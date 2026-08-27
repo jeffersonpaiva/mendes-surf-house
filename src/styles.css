@@ -213,17 +213,21 @@ textarea.field-input{ resize:vertical; }
   position:absolute; top:7px; right:9px; width:8px; height:8px; border-radius:50%; background:var(--lime);
 }
 
-/* Grid com cards de tamanho FIXO (todos com a mesma largura, em qualquer
-   linha) — ao contrário de um card que cresce pra "tapar buraco" quando a
-   linha está incompleta (o que deixava cards com tamanhos diferentes entre
-   linhas, com aparência desorganizada), aqui cada card sempre mede 255px.
-   `auto-fill` calcula sozinho quantas colunas cabem por linha conforme a
-   largura disponível — cabem ~6 numa tela de desktop larga, 2-3 num
-   notebook menor, 1 no mobile — sem precisar de breakpoint manual. Se a
-   última linha ficar incompleta, sobra só espaço em branco à direita
-   (comportamento normal de grid), nada estica. */
+/* Grid ocupando 100% da largura de .alunos-tela (a mesma largura de
+   .search-filtro-row, já que os dois têm a mesma margem lateral de 22px) —
+   as colunas usam `minmax(230px, 1fr)`: a coluna nunca fica menor que
+   230px, mas cresce (`1fr`) pra dividir igualmente qualquer espaço sobrando
+   até preencher a linha inteira, então não sobra vão à direita numa linha
+   cheia. Como as colunas são definidas uma vez pro grid inteiro (não por
+   linha, diferente de flexbox), todo card tem exatamente a mesma largura
+   em qualquer linha — sem o efeito "cards de tamanhos diferentes entre
+   linhas" que um flex-wrap com flex-grow causava. `auto-fill` decide
+   sozinho quantas colunas cabem (6 numa tela larga de desktop, menos num
+   notebook, 1 no mobile). Se a última leva de alunos não fechar uma linha
+   cheia, sobra só espaço em branco no fim dessa linha — comportamento
+   normal de grid, nenhum card estica sozinho pra tapar isso. */
 .alunos-grid{
-  display:grid; grid-template-columns:repeat(auto-fill, 255px);
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
   gap:16px; margin:16px 22px 0;
 }
 .alunos-grid-vazio{
@@ -232,7 +236,6 @@ textarea.field-input{ resize:vertical; }
 .aluno-card{
   background:var(--surface); border-radius:16px; padding:14px; cursor:pointer;
   display:flex; flex-direction:column; gap:12px;
-  width:255px;
 }
 .aluno-card:active{ background:var(--surface-2); }
 .aluno-card-top{ display:flex; align-items:center; gap:12px; min-width:0; }
