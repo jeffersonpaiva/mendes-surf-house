@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { usePaginatedQuery } from '../lib/usePaginatedQuery'
 import { ALUNOS_LISTA_CONFIG } from '../lib/queries'
+import BottomSheet from './BottomSheet'
+import { IconFilter } from './Icons'
 
 // Teto usado só pra desenhar a barrinha de aulas disponíveis (não é um
 // limite de verdade) — cobre o maior pacote do catálogo hoje ("Programa
@@ -25,13 +27,41 @@ function iniciaisDe(nome) {
  * Anterior/Próxima, que fazia mais sentido pra tabela densa do Início.
  */
 export default function AlunosGrid({ onAbrirAluno, refreshToken }) {
+  // Filtros já aplicados à lista.
   const [status, setStatus] = useState('todos') // 'todos' | 'Ativo' | 'Inativo'
   const [situacao, setSituacao] = useState('todos') // 'todos' | 'com' | 'sem'
+  // Rascunho editado dentro do modal "Filtros" — só vira filtro de verdade
+  // quando o usuário clica em "Aplicar" (evita re-buscar a cada clique nos
+  // selects, e permite "Cancelar" fechando sem aplicar nada).
+  const [modalAberto, setModalAberto] = useState(false)
+  const [rascunhoStatus, setRascunhoStatus] = useState('todos')
+  const [rascunhoSituacao, setRascunhoSituacao] = useState('todos')
 
   const filtros = {}
   if (status !== 'todos') filtros.status = status
   if (situacao === 'com') filtros.situacao_pacote = 'Com aulas disponíveis'
   if (situacao === 'sem') filtros.situacao_pacote = 'Sem aulas'
+  const filtrosAtivos = status !== 'todos' || situacao !== 'todos'
+
+  function abrirModalFiltros() {
+    setRascunhoStatus(status)
+    setRascunhoSituacao(situacao)
+    setModalAberto(true)
+  }
+
+  function aplicarFiltros() {
+    setStatus(rascunhoStatus)
+    setSituacao(rascunhoSituacao)
+    setModalAberto(false)
+  }
+
+  function limparFiltros() {
+    setRascunhoStatus('todos')
+    setRascunhoSituacao('todos')
+    setStatus('todos')
+    setSituacao('todos')
+    setModalAberto(false)
+  }
 
   const {
     itens: alunos,
@@ -45,39 +75,23 @@ export default function AlunosGrid({ onAbrirAluno, refreshToken }) {
 
   return (
     <div className="alunos-tela">
-      <div className="search">
-        <input
-          placeholder="Buscar aluno..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
-      </div>
-
-      <div className="chip-row">
-        <span className="chip-label">Status</span>
-        {[['todos', 'Todos'], ['Ativo', 'Ativo'], ['Inativo', 'Inativo']].map(([valor, rotulo]) => (
-          <button
-            key={valor}
-            type="button"
-            className={`chip ${status === valor ? 'ativo' : ''}`}
-            onClick={() => setStatus(valor)}
-          >
-            {rotulo}
-          </button>
-        ))}
-      </div>
-      <div className="chip-row">
-        <span className="chip-label">Situação</span>
-        {[['todos', 'Todos'], ['com', 'Com aulas'], ['sem', 'Sem aulas']].map(([valor, rotulo]) => (
-          <button
-            key={valor}
-            type="button"
-            className={`chip ${situacao === valor ? 'ativo' : ''}`}
-            onClick={() => setSituacao(valor)}
-          >
-            {rotulo}
-          </button>
-        ))}
+      <div className="search-filtro-row">
+        <div className="search">
+          <input
+            placeholder="Buscar aluno..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+        <button
+          type="button"
+          className={`filter-btn ${filtrosAtivos ? 'ativo' : ''}`}
+          onClick={abrirModalFiltros}
+        >
+          <IconFilter size={16} strokeWidth={2} />
+          Filtros
+          {filtrosAtivos && <span className="filter-btn-dot" />}
+        </button>
       </div>
 
       <div className="alunos-grid">
@@ -119,6 +133,41 @@ export default function AlunosGrid({ onAbrirAluno, refreshToken }) {
           </button>
         </div>
       )}
+
+      <BottomSheet open={modalAberto} onClose={() => setModalAberto(false)}>
+        <h3>Filtrar alunos</h3>
+
+        <label className="field-label">Status</label>
+        <select
+          className="field-input"
+          value={rascunhoStatus}
+          onChange={(e) => setRascunhoStatus(e.target.value)}
+        >
+          <option value="todos">Todos</option>
+          <option value="Ativo">Ativo</option>
+          <option value="Inativo">Inativo</option>
+        </select>
+
+        <label className="field-label">Situação</label>
+        <select
+          className="field-input"
+          value={rascunhoSituacao}
+          onChange={(e) => setRascunhoSituacao(e.target.value)}
+        >
+          <option value="todos">Todos</option>
+          <option value="com">Com aulas</option>
+          <option value="sem">Sem aulas</option>
+        </select>
+
+        <div className="sheet-actions">
+          <button type="button" className="secondary-btn" onClick={limparFiltros}>
+            Limpar filtros
+          </button>
+          <button type="button" className="primary-btn" onClick={aplicarFiltros}>
+            Aplicar
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   )
 }

@@ -198,28 +198,38 @@ textarea.field-input{ resize:vertical; }
 .d-pagination-info{ font-size:12.5px; color:var(--text-muted); min-width:64px; text-align:center; }
 
 /* ---------- TELA "ALUNOS" (grid com filtros) ---------- */
-/* Chips de filtro (Status / Situação), acima do grid. */
-.chip-row{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:14px; }
-.chip-label{ font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-right:2px; }
-.chip{
-  background:var(--surface); color:var(--text-muted); border:none; border-radius:20px;
-  padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
+/* Busca + botão "Filtros" lado a lado, acima do grid. O botão abre um modal
+   (BottomSheet) com os selects de Status/Situação — ver AlunosGrid.jsx. */
+.search-filtro-row{ display:flex; align-items:center; gap:10px; margin: 18px 22px 6px; }
+.search-filtro-row .search{ flex:1; margin:0; }
+.filter-btn{
+  position:relative; flex-shrink:0; display:flex; align-items:center; gap:7px;
+  height:44px; padding:0 16px; background:var(--surface); color:var(--text); border:none;
+  border-radius:14px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
 }
-.chip.ativo{ background:var(--lime); color:var(--bg-deep); }
+.filter-btn:active{ background:var(--surface-2); }
+.filter-btn.ativo{ color:var(--lime); }
+.filter-btn-dot{
+  position:absolute; top:7px; right:9px; width:8px; height:8px; border-radius:50%; background:var(--lime);
+}
 
 /* Grid responsivo: 1 coluna no mobile (largura típica de telefone cabe só
-   um cartão por linha), várias no desktop — sem precisar de breakpoint
-   manual, o auto-fill resolve sozinho conforme o espaço disponível. */
-.alunos-grid{
-  display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
-  gap:12px; margin-top:16px;
-}
+   um cartão por linha), várias no desktop. Usa flexbox (não CSS grid) de
+   propósito: com `grid` + `auto-fill`, uma última linha incompleta (ex.: 4
+   cartões numa grade de 4 colunas quando só existem 4 alunos ao todo, ou o
+   resto de uma divisão não exata) deixa células vazias reservadas — o grid
+   não redistribui a largura pros itens que sobraram. Com flex-wrap, cada
+   card cresce (`flex-grow`) até um teto (`max-width`) pra preencher o
+   espaço da linha, sem espaços fantasmas nem cards esticados demais numa
+   linha com um item só. */
+.alunos-grid{ display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; }
 .alunos-grid-vazio{
-  grid-column:1/-1; color:var(--text-muted); font-size:14px; text-align:center; padding:24px 0;
+  width:100%; color:var(--text-muted); font-size:14px; text-align:center; padding:24px 0;
 }
 .aluno-card{
   background:var(--surface); border-radius:16px; padding:14px; cursor:pointer;
   display:flex; flex-direction:column; gap:12px;
+  flex:1 1 230px; max-width:320px;
 }
 .aluno-card:active{ background:var(--surface-2); }
 .aluno-card-top{ display:flex; align-items:center; gap:12px; min-width:0; }

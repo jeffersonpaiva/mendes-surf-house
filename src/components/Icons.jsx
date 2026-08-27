@@ -144,3 +144,12 @@ export function IconSearch(props) {
     </IconBase>
   )
 }
+
+/** Botão "Filtros" — funil. */
+export function IconFilter(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M3.5 4.5h17L14 12.8v6l-4 2v-8L3.5 4.5Z" />
+    </IconBase>
+  )
+}
