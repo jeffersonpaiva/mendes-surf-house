@@ -32,6 +32,7 @@ export default function App() {
 
   const [alunoSelecionado, setAlunoSelecionado] = useState(null)
   const [sheetAberto, setSheetAberto] = useState(null) // 'menuGeral' | 'aluno' | 'novoAluno' | 'editarAluno' | 'pacote' | 'baixa' | 'baixaLote' | 'historico'
+  const [tela, setTela] = useState('inicio') // 'inicio' | 'alunos' — controla o menu de navegação (bottom nav / sidebar)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSessao(data.session))
@@ -76,7 +77,9 @@ export default function App() {
     onAbrirMenuGeral: () => setSheetAberto('menuGeral'),
     onAtualizar: recarregar,
     atualizando: carregandoDados,
-    refreshToken
+    refreshToken,
+    tela,
+    onNavegar: setTela
   }
 
   return (
