@@ -161,12 +161,20 @@ rodado no SQL Editor do Supabase** antes da paginação/KPIs novos funcionarem
   `fetchDashboard()` + `fetchAulasNoMes()` + `calcularKpis()`, removidas de
   `queries.js`).
 
-A lista de alunos da tela Início (mobile e desktop) e o histórico de um
-aluno (`ModalHistorico`) são paginados por cursor (keyset/seek method), 20
-registros por vez, com busca/filtro batendo direto no banco inteiro (não só
-nos registros já carregados) — ver `src/lib/usePaginatedQuery.js` (hook
-genérico reutilizável) + `ALUNOS_LISTA_CONFIG`/`HISTORICO_LISTA_CONFIG`/
-`buscarPaginaKeyset()` em `queries.js`. A lista completa de alunos
+A lista de alunos da tela Início (mobile e desktop), o grid da tela **Alunos**
+(`AlunosGrid.jsx`, nova em 2026-08-27) e o histórico de um aluno
+(`ModalHistorico`) são paginados por cursor (keyset/seek method) — 20
+registros por vez na Início e no histórico, **24 no grid da tela Alunos**
+(ajuste fino pedido pelo usuário depois de ver o grid rodando em produção,
+diferença intencional, não é inconsistência) — com busca/filtro batendo
+direto no banco inteiro (não só nos registros já carregados) — ver
+`src/lib/usePaginatedQuery.js` (hook genérico reutilizável) +
+`ALUNOS_LISTA_CONFIG`/`HISTORICO_LISTA_CONFIG`/`buscarPaginaKeyset()` em
+`queries.js`. O grid da tela Alunos também filtra por `status` e
+`situacao_pacote` (dropdowns num modal "Filtros") e exibe
+`saldo`/`total_adquirido` por aluno (ex. "3/10 aulas") — os dois já vêm
+prontos de `vw_dashboard_alunos`/`vw_saldo_alunos`, nenhuma coluna ou view
+nova foi necessária pra isso. A lista completa de alunos
 (`fetchRosterParaLote()`) continua sendo buscada inteira, sem paginação —
 é usada só por "Dar baixa em lote" pra casar nomes colados do WhatsApp
 contra todo o cadastro, não é uma lista navegável.

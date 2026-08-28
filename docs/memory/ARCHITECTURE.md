@@ -151,7 +151,38 @@ Usada pelos fluxos 4 e 5. Sempre:
 ### 7. Ver histórico (`ModalHistorico.jsx` → `usePaginatedQuery` + `HISTORICO_LISTA_CONFIG`)
 
 Movimentações de um aluno, mais recente primeiro, paginadas por cursor (20
-por vez, botão "Carregar mais") — ver seção 2.1. Somente leitura.
+por vez, botão "Carregar mais") — ver seção 2.1. `ativo: open && !!aluno`
+liga a busca só enquanto o modal está aberto pra esse aluno. Somente
+leitura, sem busca por texto.
+
+### 8. Tela "Alunos" (`AlunosGrid.jsx`, 2026-08-27)
+
+Segunda forma de navegar pela lista de alunos (além da lista/tabela da tela
+Início), acessível pelo item "Alunos" da nav (mobile) / sidebar (desktop) —
+estado `tela` (`'inicio' | 'alunos'`) em `App.jsx`, passado como prop pros
+dois Dashboards. Um único componente serve mobile e desktop (o grid é
+responsivo sozinho via CSS, diferente do Dashboard/DashboardDesktop que têm
+versões separadas por serem paradigmas bem diferentes — cards vs. tabela).
+
+- Grid de cards (`.alunos-grid`, CSS Grid com `minmax(230px, 1fr)` — cresce
+  pra preencher a largura da linha inteira, sem sobrar vão nem esticar de
+  forma inconsistente entre linhas, já que as colunas são compartilhadas por
+  todo o grid, não por linha), cada card clicável abrindo o mesmo
+  `StudentActionSheet` de sempre (mesma prop `onAbrirAluno` que a lista da
+  Início usa).
+- Cada card mostra `saldo/total_adquirido` aulas (ex. "3/10 aulas") e uma
+  barrinha de progresso proporcional — `total_adquirido` já vem pronto da
+  view `vw_dashboard_alunos` (soma histórica de tudo que o aluno já
+  comprou), não precisou de SQL novo.
+- Busca por nome (mesmo padrão `ilike` direto no banco) + um único botão
+  "Filtros" ao lado da busca, que abre um `BottomSheet` com dois `<select>`
+  (Status: Ativo/Inativo; Situação: com/sem aulas disponíveis) — edição em
+  rascunho, só aplica de fato ao clicar "Aplicar" (evita re-buscar a cada
+  clique no select).
+- Usa `usePaginatedQuery` + `ALUNOS_LISTA_CONFIG`, com `pageSize: 24` (as
+  outras listas do app usam 20 — número diferente aqui é intencional, ajuste
+  fino pedido pelo usuário depois de ver o grid rodando, não é
+  inconsistência a "corrigir").
 
 ## Importação em lote (fora do app, script separado)
 
