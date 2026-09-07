@@ -67,9 +67,43 @@ reintroduzem um bug que já foi resolvido.
 
 ## Autenticação / autorização
 
-- **Todo usuário autenticado tem acesso total** (não existe distinção de papel
-  ainda). Só o administrador deve receber login — não é seguro criar conta para
-  outra pessoa (ex: um aluno) esperando que ela veja só os próprios dados, porque
-  essa restrição ainda não existe no RLS.
-- Não há fluxo de cadastro/self-signup no app — todo usuário é criado manualmente
-  no painel do Supabase (Authentication → Users).
+- **Atualizado em 2026-09-07: existem dois papéis agora — `admin` e
+  `vendedor`** (tabela `usuarios_perfis`, ver `docs/memory/DATABASE.md`).
+  `admin` continua com acesso total (alunos, movimentações, pacotes,
+  configurações, e vendas de camisa). `vendedor` só lê/escreve
+  `pedidos_camisas` — bloqueado por RLS em todo o resto, não só escondido na
+  UI. Todo usuário criado antes desta mudança virou `admin` automaticamente
+  (ninguém perdeu acesso).
+- Não há fluxo de cadastro/self-signup no app — todo usuário (admin ou
+  vendedor) é criado manualmente no painel do Supabase (Authentication →
+  Users), e o papel é atribuído manualmente rodando um `insert` em
+  `usuarios_perfis` (ver instruções no topo de
+  `scripts/sql/2026-09-07-vendas-camisas.sql`). Continua não sendo seguro
+  criar conta pra ninguém além de admin/vendedor de confiança até que
+  existam outros papéis com RLS granular o suficiente (ex: aluno vendo só o
+  próprio saldo — ainda não implementado).
+
+## Vendas de camisa (surf trip, `pedidos_camisas`)
+
+- **Preço por modalidade, não digitado livre.** "Encomenda" = R$ 120,
+  "Pronta entrega" (vendida e entregue no dia da viagem) = R$ 150 —
+  constantes em `PRECO_CAMISA` (`queries.js`). O valor final gravado
+  (`pedidos_camisas.valor`) é sempre `preço da modalidade − desconto`,
+  nunca negativo, calculado no formulário (`ModalPedidoCamisa.jsx`) — quem
+  registra a venda não digita o valor final, só o desconto (opcional,
+  pensado pro caso de staff, mas não travado a esse caso).
+- **"Entregue" é o que diferencia encomenda de venda pronta.** Todo pedido
+  nasce com um valor padrão de `entregue` conforme a modalidade — "Pronta
+  entrega" já nasce entregue (o cliente leva a camisa na hora, no dia da
+  viagem), "Encomenda" nasce pendente — mas o campo é sempre editável depois
+  (virar em qualquer direção), porque é assim que o admin/vendedor sabe
+  quais encomendas ainda faltam entregar. Não existe hoje nenhuma automação
+  que marque "entregue" sozinho — é sempre uma ação manual de editar o
+  pedido.
+- **Pedido não é apagado pelo app** — mesma filosofia de nunca apagar
+  histórico usada em `movimentacoes` (ver acima). Um pedido errado deve ser
+  corrigido editando os campos, não excluído (não há policy de `delete` em
+  `pedidos_camisas`).
+- **Sem checagem de cliente duplicado.** Diferente de `alunos` (nome
+  duplicado bloqueado), o mesmo cliente pode ter vários pedidos de camisa —
+  é o esperado (ex: mais de um tamanho/modelo pro mesmo cliente).

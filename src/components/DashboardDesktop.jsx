@@ -1,7 +1,8 @@
-import { IconHome, IconUsers, IconChart, IconSettings, IconSearch } from './Icons'
+import { IconHome, IconUsers, IconShirt, IconSettings, IconSearch } from './Icons'
 import { usePaginatedQuery } from '../lib/usePaginatedQuery'
 import { ALUNOS_LISTA_CONFIG } from '../lib/queries'
 import AlunosGrid from './AlunosGrid'
+import VendasGrid from './VendasGrid'
 
 function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
@@ -21,10 +22,17 @@ function iniciaisDe(nome) {
  * Anterior/Próxima em vez do "Carregar mais" do mobile — troca a página
  * inteira em vez de acumular, que é o padrão mais natural numa tabela densa
  * de desktop. `tela`/`onNavegar` (estado vindo de App.jsx) alternam entre
- * "Início" e a tela "Alunos" (grid de cards com filtros — `AlunosGrid.jsx`,
- * compartilhada com o Dashboard mobile).
+ * "Início", "Alunos" (grid de cards com filtros — `AlunosGrid.jsx`,
+ * compartilhada com o Dashboard mobile) e "Vendas" (idem, `VendasGrid.jsx`).
+ *
+ * `papel` ('admin' | 'vendedor', 2026-09-07) restringe a sidebar a um único
+ * item ("Vendas") e esconde o botão "+ Nova ação" (ações de aluno) pro
+ * papel vendedor — mesma lógica do Dashboard mobile; o bloqueio real é RLS
+ * no banco, isto aqui só evita mostrar caminho morto na UI.
  */
-export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando, refreshToken, tela, onNavegar }) {
+export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando, refreshToken, tela, onNavegar, papel }) {
+  const souVendedor = papel === 'vendedor'
+
   const {
     itens: alunosFiltrados,
     carregando: carregandoLista,
@@ -35,7 +43,9 @@ export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral,
     setBusca,
     proximaPagina,
     paginaAnterior
-  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 18, sinalRecarregar: refreshToken, ativo: tela === 'inicio' })
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 18, sinalRecarregar: refreshToken, ativo: tela === 'inicio' && !souVendedor })
+
+  const titulo = souVendedor ? 'Vendas' : tela === 'alunos' ? 'Alunos' : tela === 'vendas' ? 'Vendas' : 'Início'
 
   return (
     <div className="desktop-shell">
@@ -45,21 +55,31 @@ export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral,
           <div className="brand-sub">SURF HOUSE</div>
         </div>
         <div className="side-nav">
-          <div className={`side-link ${tela === 'inicio' ? 'active' : ''}`} onClick={() => onNavegar('inicio')}>
-            <span className="ic"><IconHome size={16} /></span>Início
-          </div>
-          <div className={`side-link ${tela === 'alunos' ? 'active' : ''}`} onClick={() => onNavegar('alunos')}>
-            <span className="ic"><IconUsers size={16} /></span>Alunos
-          </div>
-          <div className="side-link"><span className="ic"><IconChart size={16} /></span>Relatórios</div>
-          <div className="side-link"><span className="ic"><IconSettings size={16} /></span>Ajustes</div>
+          {souVendedor ? (
+            <div className="side-link active">
+              <span className="ic"><IconShirt size={16} /></span>Vendas
+            </div>
+          ) : (
+            <>
+              <div className={`side-link ${tela === 'inicio' ? 'active' : ''}`} onClick={() => onNavegar('inicio')}>
+                <span className="ic"><IconHome size={16} /></span>Início
+              </div>
+              <div className={`side-link ${tela === 'alunos' ? 'active' : ''}`} onClick={() => onNavegar('alunos')}>
+                <span className="ic"><IconUsers size={16} /></span>Alunos
+              </div>
+              <div className={`side-link ${tela === 'vendas' ? 'active' : ''}`} onClick={() => onNavegar('vendas')}>
+                <span className="ic"><IconShirt size={16} /></span>Vendas
+              </div>
+              <div className="side-link"><span className="ic"><IconSettings size={16} /></span>Ajustes</div>
+            </>
+          )}
         </div>
       </aside>
 
       <div className="main-col">
         <div className="topbar">
-          <h1>{tela === 'alunos' ? 'Alunos' : 'Início'}</h1>
-          {tela === 'inicio' && (
+          <h1>{titulo}</h1>
+          {!souVendedor && tela === 'inicio' && (
             <div className="d-search">
               <span className="ic"><IconSearch size={15} /></span>
               <input
@@ -74,18 +94,20 @@ export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral,
             className={`refresh-btn ${atualizando ? 'spinning' : ''}`}
             onClick={onAtualizar}
             disabled={atualizando}
-            aria-label="Atualizar lista de alunos"
+            aria-label="Atualizar"
             title="Atualizar"
           >
             <span className="refresh-icon">⟳</span>
           </button>
-          <button type="button" className="btn-primary-d" onClick={onAbrirMenuGeral}>
-            + Nova ação
-          </button>
+          {!souVendedor && (
+            <button type="button" className="btn-primary-d" onClick={onAbrirMenuGeral}>
+              + Nova ação
+            </button>
+          )}
         </div>
 
         <div className="content">
-          {tela === 'inicio' && (
+          {!souVendedor && tela === 'inicio' && (
             <>
               <div className="kpi-row">
                 <div className="kpi-card"><div className="num">{kpis.alunosAtivos}</div><div className="label">Alunos ativos</div></div>
@@ -150,8 +172,12 @@ export default function DashboardDesktop({ kpis, onAbrirAluno, onAbrirMenuGeral,
             </>
           )}
 
-          {tela === 'alunos' && (
+          {!souVendedor && tela === 'alunos' && (
             <AlunosGrid onAbrirAluno={onAbrirAluno} refreshToken={refreshToken} />
+          )}
+
+          {(souVendedor || tela === 'vendas') && (
+            <VendasGrid refreshToken={refreshToken} />
           )}
         </div>
       </div>

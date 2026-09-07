@@ -184,6 +184,57 @@ versões separadas por serem paradigmas bem diferentes — cards vs. tabela).
   fino pedido pelo usuário depois de ver o grid rodando, não é
   inconsistência a "corrigir").
 
+### 9. Papel do usuário e tela "Vendas" (`VendasGrid.jsx`, `ModalPedidoCamisa.jsx`, 2026-09-07)
+
+Primeira vez que o app diferencia usuários por papel. `App.jsx` lê o papel
+(`'admin'` | `'vendedor'`) assim que a sessão existe, via `fetchMeuPapel()`
+(`queries.js` → tabela `usuarios_perfis`), guarda em estado (`papel`) e passa
+como prop pra `Dashboard`/`DashboardDesktop`. Se `papel === 'vendedor'`, um
+`useEffect` força `tela` pra `'vendas'` assim que o papel é conhecido (login
+de vendedor nunca fica preso em "Início", que ele não pode ver).
+
+**A restrição real é no RLS do banco, não na UI.** `Dashboard.jsx` /
+`DashboardDesktop.jsx` escondem nav/FAB/KPIs que o vendedor não deveria usar
+(evita caminho morto — clicar em algo que vai dar erro), mas quem realmente
+impede o vendedor de ler/escrever `alunos`/`movimentacoes`/`pacotes`/
+`configuracoes` é a policy `fn_papel_atual() = 'admin'` dessas 4 tabelas
+(ver `docs/memory/DATABASE.md`, seção RLS). `App.jsx.recarregar()` também só
+chama `fetchDashboardKpis()`/`fetchRosterParaLote()` quando `papel === 'admin'`
+— pro vendedor, essas chamadas dariam erro de RLS à toa (RLS bloqueia,
+`buscarPaginaKeyset`/`.rpc()` lançam erro), então nem tentam.
+
+**Tela "Vendas"** — ocupa o lugar do antigo item "Relatórios" (que nunca
+teve `onClick`) na nav mobile e na sidebar desktop, ícone novo (`IconShirt`,
+`Icons.jsx`). Ao contrário de "Alunos" (que delega "abrir aluno" pro
+`StudentActionSheet` compartilhado em `App.jsx`), a tela Vendas é
+**totalmente autocontida**: `VendasGrid.jsx` mantém seu próprio botão "+"
+(FAB) e seu próprio modal (`ModalPedidoCamisa.jsx`, criar/editar num
+componente só — diferente do padrão Novo/Editar separado de Aluno, porque
+aqui os campos são idênticos nos dois modos, então separar duplicaria o
+formulário à toa). Nada disso passa pelo `sheetAberto` de `App.jsx`.
+
+- Grid de cards (mesmas classes CSS de `AlunosGrid.jsx` — `.alunos-grid`/
+  `.aluno-card` — mais uma classe própria `.pedido-card-bottom` pro
+  preço/status, já que o conteúdo do rodapé do card é diferente), busca por
+  nome do cliente + botão "Filtros" (modalidade, status de entrega) — mesmo
+  padrão de `AlunosGrid`.
+- `usePaginatedQuery` + `PEDIDOS_LISTA_CONFIG` (`queries.js`), 24 por vez
+  (mesmo pageSize da tela Alunos). Como o refresh de um pedido criado/editado
+  aqui dentro não passa por `App.jsx`, `VendasGrid` combina o `refreshToken`
+  vindo de fora com um contador local (`refreshLocal`) numa chave composta
+  (`sinalRecarregar: \`${refreshToken}:${refreshLocal}\``) — muda de valor
+  (e recarrega a lista) tanto por uma recarga externa quanto por um
+  salvamento local, sem precisar subir esse evento até `App.jsx`.
+- Card clicável abre `ModalPedidoCamisa` já preenchido (modo edição);
+  botão "+" abre o mesmo modal vazio (modo criação, `pedido = null`).
+- Preço nunca é digitado livre: `ModalPedidoCamisa` calcula
+  `PRECO_CAMISA[modalidade] − desconto` (nunca negativo) e mostra como texto
+  — só o desconto é um campo numérico editável. "Pronta entrega" marca
+  `entregue = true` por padrão ao criar (checkbox editável); "Encomenda"
+  nasce pendente. Editar um pedido permite virar esse status a qualquer
+  momento (é assim que o fluxo "encomenda → cliente recebeu" é rastreado —
+  ver `docs/memory/BUSINESS_RULES.md`).
+
 ## Importação em lote (fora do app, script separado)
 
 `scripts/importar-alunos.js` roda localmente via `node` (não faz parte do bundle

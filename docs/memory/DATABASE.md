@@ -181,11 +181,77 @@ contra todo o cadastro, não é uma lista navegável.
 
 ## RLS (Row Level Security)
 
-RLS está habilitado nas 4 tabelas. Hoje existe uma única política por tabela:
-`auth.role() = 'authenticated'` (qualquer usuário logado tem acesso total —
-leitura e escrita). **Não há diferenciação de papel/role ainda** (ex: admin vs.
-aluno vs. professor). Isso é uma pendência conhecida para quando o projeto abrir
-acesso a alunos verem o próprio saldo — ver `CURRENT_STATE.md`.
+**Atualizado em 2026-09-07** — primeira diferenciação de papel do projeto
+(script `scripts/sql/2026-09-07-vendas-camisas.sql`):
+
+- `alunos`, `movimentacoes`, `pacotes`, `configuracoes`: a política antiga
+  (`auth.role() = 'authenticated'`, qualquer logado tem acesso total) foi
+  **removida e recriada** exigindo `fn_papel_atual() = 'admin'`. O papel
+  `vendedor` (novo) não lê nem escreve nada nestas 4 tabelas.
+- `pedidos_camisas` (nova, ver abaixo): qualquer autenticado (admin ou
+  vendedor) lê/insere/atualiza. Sem policy de delete — ninguém apaga pedido
+  pelo app.
+- `usuarios_perfis` (nova): cada usuário só lê a própria linha
+  (`auth.uid() = id`). Sem policy de insert/update/delete — papel é
+  atribuído manualmente pelo admin via SQL Editor, mesma convenção de "sem
+  self-signup" já usada pra criar login.
+
+Ainda **não há** diferenciação mais fina que isso (ex: aluno vendo só o
+próprio saldo) — isso continua pendência pra quando o projeto abrir acesso a
+alunos (ver `CURRENT_STATE.md`), mas agora existe o mecanismo
+(`usuarios_perfis` + `fn_papel_atual()`) pra construir em cima.
+
+### `usuarios_perfis`
+
+Mapeia cada login (`auth.users.id`) a um papel.
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | uuid, PK | FK → `auth.users(id)` on delete cascade |
+| `papel` | text, not null, default `'admin'` | `'admin'` \| `'vendedor'` |
+| `nome` | text, nullable | só pra referência humana, não usado em lógica |
+| `criado_em` | timestamptz, default `now()` | |
+
+Todo usuário que já existia antes deste script virou `'admin'`
+automaticamente (preserva o acesso de quem já usava o sistema). Pra criar um
+vendedor: criar o login manualmente em Authentication → Users (mesmo fluxo
+sem self-signup de sempre) e depois rodar um `insert`/`upsert` nesta tabela
+com `papel = 'vendedor'` — ver comentário no topo do script SQL.
+
+Função `fn_papel_atual()` (security definer): devolve o papel do usuário
+logado, ou `'admin'` se não houver linha (evita trancar administrador fora
+do sistema por esquecimento de cadastro). Usada dentro das policies de
+`alunos`/`movimentacoes`/`pacotes`/`configuracoes`.
+
+### `pedidos_camisas`
+
+Tela "Vendas" (2026-09-07) — controle de venda das camisas da surf trip.
+Cada linha é um pedido completo (não precisou de view — não há agregação,
+diferente de `alunos`/`movimentacoes`).
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | uuid, PK | |
+| `cliente_nome` | text, not null | sem checagem de duplicidade (diferente de `alunos`) |
+| `modelo` | text, not null | check: `'Surf Trip'` \| `'WSL Pipa'` |
+| `cor` | text, not null | check: `'Branco'` \| `'Marrom'` \| `'Azul'` \| `'Preto'` |
+| `tamanho` | text, not null | check: `'P'` \| `'M'` \| `'G'` |
+| `tipo_venda` | text, not null, default `'Venda'` | check: `'Venda'` \| `'Staff'` |
+| `modalidade` | text, not null | check: `'Encomenda'` \| `'Pronta entrega'` — define o preço sugerido (ver `PRECO_CAMISA` em `queries.js`: R$120/R$150) |
+| `forma_pagamento` | text, not null | check: `'Pix'` \| `'Crédito'` \| `'Débito'` \| `'Staff'` |
+| `valor` | numeric(10,2), not null, check ≥ 0 | valor final cobrado (preço da modalidade − desconto, calculado no frontend antes de gravar) |
+| `desconto` | numeric(10,2), not null, default 0, check ≥ 0 | informativo — quanto foi descontado do preço da modalidade |
+| `entregue` | boolean, not null, default false | "Pronta entrega" nasce `true`, "Encomenda" nasce `false` — editável depois em qualquer direção |
+| `data_entrega` | date, nullable | preenchida quando `entregue` vira `true`; `null` de novo se voltar a `false` |
+| `observacao` | text, nullable | |
+| `registrado_por` | uuid, nullable | FK → `auth.users(id)`, quem criou o pedido (admin ou vendedor) |
+| `criado_em` | timestamptz, default `now()` | |
+| `atualizado_em` | timestamptz, default `now()` | mantida por trigger a cada `update` |
+
+Índices: `idx_pedidos_cliente_trgm` (GIN/trigram em `cliente_nome`, busca
+`ilike`) e `idx_pedidos_criado_id` (btree, `criado_em desc, id desc`,
+ordenação/keyset da lista). Paginado por cursor igual ao resto do app — ver
+`PEDIDOS_LISTA_CONFIG` em `queries.js`.
 
 ## Como alterar o banco
 

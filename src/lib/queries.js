@@ -1,6 +1,30 @@
 import { supabase } from '../supabaseClient'
 
 /**
+ * Papel do usuário logado ('admin' ou 'vendedor') — lido de
+ * `usuarios_perfis` (tabela nova, 2026-09-07). Controla tanto o que aparece
+ * na navegação (App.jsx) quanto, na camada que realmente importa, o que o
+ * RLS deixa ler/escrever no banco (ver
+ * scripts/sql/2026-09-07-vendas-camisas.sql) — a UI só reflete o que o
+ * banco já impõe, não é a barreira de segurança.
+ * Sempre retorna algo utilizável: se não houver linha em `usuarios_perfis`
+ * (usuário criado sem rodar o insert manual) ou a consulta falhar, cai para
+ * 'admin' — mesma escolha segura que a função `fn_papel_atual()` faz no
+ * banco, pra nunca trancar um administrador fora do próprio sistema.
+ */
+export async function fetchMeuPapel() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 'admin'
+  const { data, error } = await supabase
+    .from('usuarios_perfis')
+    .select('papel')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (error || !data) return 'admin'
+  return data.papel
+}
+
+/**
  * KPIs do topo do Dashboard, calculados inteiramente no banco (função RPC)
  * em vez de trazer todos os alunos pro navegador só pra somar/contar — ver
  * `fn_dashboard_kpis` em `scripts/sql/2026-08-27-paginacao-indices-kpis.sql`
@@ -353,3 +377,122 @@ export async function registrarAulaLote({ alunoIds, data, observacao }) {
 // Histórico de aluno (antiga fetchHistoricoAluno) agora é paginado por
 // cursor — ver HISTORICO_LISTA_CONFIG + usePaginatedQuery, consumido em
 // ModalHistorico.jsx.
+
+// ────────────────────────────────────────────────────────────────
+// Vendas de camisa (surf trip) — 2026-09-07
+// ────────────────────────────────────────────────────────────────
+// Tela nova, restrita a admin + um novo papel "vendedor" (ver
+// fetchMeuPapel() no topo deste arquivo e
+// scripts/sql/2026-09-07-vendas-camisas.sql). Segue o mesmo padrão de
+// "pedido" da tela Alunos: uma tabela própria (`pedidos_camisas`), sem
+// view — não precisa agregar nada, cada linha já é o registro completo.
+
+/**
+ * Preço sugerido da camisa por modalidade — pré-preenche o formulário
+ * (`ModalPedidoCamisa`), igual `pacotes.valor` pré-preenche o formulário de
+ * pacote. "Encomenda" = pedido feito antes da viagem, entregue depois;
+ * "Pronta entrega" = vendida e entregue no dia da viagem em si.
+ */
+export const PRECO_CAMISA = {
+  Encomenda: 120,
+  'Pronta entrega': 150
+}
+
+/**
+ * Configuração da lista paginada de pedidos de camisa (tela Vendas) — mais
+ * recente primeiro, `id` como desempate final (mesmo padrão de
+ * HISTORICO_LISTA_CONFIG). Busca por nome do cliente.
+ */
+export const PEDIDOS_LISTA_CONFIG = {
+  table: 'pedidos_camisas',
+  select: '*',
+  orderColumns: [
+    { coluna: 'criado_em', asc: false },
+    { coluna: 'id', asc: false }
+  ],
+  searchColumn: 'cliente_nome'
+}
+
+/**
+ * Cria um pedido de camisa. `valor` já vem calculado pelo formulário
+ * (preço da modalidade − desconto, nunca negativo — ver
+ * `ModalPedidoCamisa.jsx`), então aqui só grava.
+ * `entregue` default: "Pronta entrega" já nasce entregue (vendida no dia da
+ * viagem, o cliente leva na hora); "Encomenda" nasce pendente. Sempre
+ * editável depois, em qualquer direção, pelo modal de edição.
+ */
+export async function criarPedidoCamisa({
+  clienteNome, modelo, cor, tamanho, tipoVenda, modalidade, formaPagamento,
+  valor, desconto, observacao, entregue
+}) {
+  const nomeLimpo = (clienteNome || '').trim()
+  if (!nomeLimpo) throw new Error('Informe o nome do cliente.')
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const entregueFinal = entregue ?? modalidade === 'Pronta entrega'
+
+  const { data: pedido, error } = await supabase
+    .from('pedidos_camisas')
+    .insert({
+      cliente_nome: nomeLimpo,
+      modelo,
+      cor,
+      tamanho,
+      tipo_venda: tipoVenda || 'Venda',
+      modalidade,
+      forma_pagamento: formaPagamento,
+      valor,
+      desconto: desconto || 0,
+      entregue: entregueFinal,
+      data_entrega: entregueFinal ? new Date().toISOString().slice(0, 10) : null,
+      observacao: observacao || null,
+      registrado_por: user?.id || null
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return pedido
+}
+
+/**
+ * Atualiza um pedido de camisa já existente — inclusive marcar/desmarcar
+ * "entregue" (é assim que a tela acompanha encomenda vs. pronta entrega:
+ * o pedido nasce pendente ou entregue, dependendo da modalidade, e o
+ * admin/vendedor atualiza manualmente quando o cliente recebe a camisa).
+ * `data_entrega` some quando o pedido volta a ficar pendente (edição por
+ * engano), e é preenchida com a data atual só na transição pendente→entregue.
+ */
+export async function editarPedidoCamisa({
+  pedidoId, clienteNome, modelo, cor, tamanho, tipoVenda, modalidade,
+  formaPagamento, valor, desconto, observacao, entregue, dataEntregaAtual
+}) {
+  if (!pedidoId) throw new Error('Pedido não informado.')
+  const nomeLimpo = (clienteNome || '').trim()
+  if (!nomeLimpo) throw new Error('Informe o nome do cliente.')
+
+  const dataEntrega = entregue
+    ? (dataEntregaAtual || new Date().toISOString().slice(0, 10))
+    : null
+
+  const { data: pedido, error } = await supabase
+    .from('pedidos_camisas')
+    .update({
+      cliente_nome: nomeLimpo,
+      modelo,
+      cor,
+      tamanho,
+      tipo_venda: tipoVenda || 'Venda',
+      modalidade,
+      forma_pagamento: formaPagamento,
+      valor,
+      desconto: desconto || 0,
+      entregue,
+      data_entrega: dataEntrega,
+      observacao: observacao || null
+    })
+    .eq('id', pedidoId)
+    .select()
+    .single()
+  if (error) throw error
+  return pedido
+}

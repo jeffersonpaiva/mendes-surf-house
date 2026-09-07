@@ -251,6 +251,14 @@ textarea.field-input{ resize:vertical; }
 .aula-bar-fill.zerado{ background:var(--coral); }
 .aula-bar-num{ font-size:11.5px; color:var(--text-muted); white-space:nowrap; flex-shrink:0; }
 
+/* ---------- TELA "VENDAS" (pedidos de camisa da surf trip) ---------- */
+/* Reaproveita a estrutura visual de .aluno-card (mesmo grid .alunos-grid),
+   só troca o rodapé do card (barra de progresso de aulas) por
+   preço + status de entrega — ver VendasGrid.jsx. */
+.pedido-card-bottom{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.pedido-valor{ font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; color:var(--text); }
+.badge{ display:inline-flex; align-items:center; gap:4px; }
+
 /* ---------- HISTÓRICO ---------- */
 .historico-row{
   display:flex; align-items:center; justify-content:space-between; padding: 12px 0;

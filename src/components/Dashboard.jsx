@@ -1,15 +1,27 @@
 import { useState } from 'react'
-import { IconHome, IconUsers, IconChart, IconSettings } from './Icons'
+import { IconHome, IconUsers, IconShirt, IconSettings } from './Icons'
 import { usePaginatedQuery } from '../lib/usePaginatedQuery'
 import { ALUNOS_LISTA_CONFIG } from '../lib/queries'
 import AlunosGrid from './AlunosGrid'
+import VendasGrid from './VendasGrid'
 
 function iniciaisDe(nome) {
   return nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
 }
 
-export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando, refreshToken, tela, onNavegar }) {
+/**
+ * `papel` ('admin' | 'vendedor', vindo de App.jsx/fetchMeuPapel — ver
+ * queries.js) decide o que aparece aqui. O vendedor só existe pra tocar a
+ * tela "Vendas" (venda das camisas da surf trip, 2026-09-07): nav reduzida
+ * a um item só, sem Início/Alunos/Ajustes, e sem o FAB geral (que abre
+ * ações de aluno — a tela Vendas tem seu próprio "+", ver VendasGrid.jsx).
+ * Essa restrição na UI é só conveniência visual — o bloqueio de verdade é
+ * no RLS do banco (scripts/sql/2026-09-07-vendas-camisas.sql), então nada
+ * aqui precisa ser "à prova de hack", só evitar mostrar caminho morto.
+ */
+export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtualizar, atualizando, refreshToken, tela, onNavegar, papel }) {
   const [kpisAbertos, setKpisAbertos] = useState(true)
+  const souVendedor = papel === 'vendedor'
 
   // Lista paginada por cursor (18 por vez), busca por nome direto no banco
   // (não só nos alunos já carregados) — ver src/lib/usePaginatedQuery.js.
@@ -22,7 +34,7 @@ export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtua
     busca,
     setBusca,
     carregarMais
-  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 18, sinalRecarregar: refreshToken, ativo: tela === 'inicio' })
+  } = usePaginatedQuery({ ...ALUNOS_LISTA_CONFIG, pageSize: 18, sinalRecarregar: refreshToken, ativo: tela === 'inicio' && !souVendedor })
 
   return (
     <>
@@ -37,7 +49,7 @@ export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtua
             className={`refresh-btn ${atualizando ? 'spinning' : ''}`}
             onClick={onAtualizar}
             disabled={atualizando}
-            aria-label="Atualizar lista de alunos"
+            aria-label="Atualizar"
             title="Atualizar"
           >
             <span className="refresh-icon">⟳</span>
@@ -46,7 +58,7 @@ export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtua
         <div className="wave" />
       </header>
 
-      {tela === 'inicio' && (
+      {!souVendedor && tela === 'inicio' && (
         <>
           <div className="kpis-header">
             <div className="label">Resumo</div>
@@ -109,7 +121,7 @@ export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtua
         </>
       )}
 
-      {tela === 'alunos' && (
+      {!souVendedor && tela === 'alunos' && (
         <>
           <div className="section-title">
             <h2>Alunos</h2>
@@ -120,17 +132,38 @@ export default function Dashboard({ kpis, onAbrirAluno, onAbrirMenuGeral, onAtua
         </>
       )}
 
-      <button className="fab" onClick={onAbrirMenuGeral}>+</button>
+      {tela === 'vendas' && (
+        <>
+          <div className="section-title">
+            <h2>Vendas — camisas da surf trip</h2>
+          </div>
+          <div className="list">
+            <VendasGrid refreshToken={refreshToken} />
+          </div>
+        </>
+      )}
+
+      {!souVendedor && <button className="fab" onClick={onAbrirMenuGeral}>+</button>}
 
       <nav>
-        <div className={`nav-item ${tela === 'inicio' ? 'active' : ''}`} onClick={() => onNavegar('inicio')}>
-          <div className="nav-dot"><IconHome size={16} /></div>Início
-        </div>
-        <div className={`nav-item ${tela === 'alunos' ? 'active' : ''}`} onClick={() => onNavegar('alunos')}>
-          <div className="nav-dot"><IconUsers size={16} /></div>Alunos
-        </div>
-        <div className="nav-item"><div className="nav-dot"><IconChart size={16} /></div>Relatórios</div>
-        <div className="nav-item"><div className="nav-dot"><IconSettings size={16} /></div>Ajustes</div>
+        {souVendedor ? (
+          <div className="nav-item active">
+            <div className="nav-dot"><IconShirt size={16} /></div>Vendas
+          </div>
+        ) : (
+          <>
+            <div className={`nav-item ${tela === 'inicio' ? 'active' : ''}`} onClick={() => onNavegar('inicio')}>
+              <div className="nav-dot"><IconHome size={16} /></div>Início
+            </div>
+            <div className={`nav-item ${tela === 'alunos' ? 'active' : ''}`} onClick={() => onNavegar('alunos')}>
+              <div className="nav-dot"><IconUsers size={16} /></div>Alunos
+            </div>
+            <div className={`nav-item ${tela === 'vendas' ? 'active' : ''}`} onClick={() => onNavegar('vendas')}>
+              <div className="nav-dot"><IconShirt size={16} /></div>Vendas
+            </div>
+            <div className="nav-item"><div className="nav-dot"><IconSettings size={16} /></div>Ajustes</div>
+          </>
+        )}
       </nav>
     </>
   )

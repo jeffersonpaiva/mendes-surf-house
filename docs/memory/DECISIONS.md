@@ -193,3 +193,52 @@ qualquer login de aluno existir de verdade.
 **Arquivos relacionados:** `docs/mockups/tela-aluno-mockup.html`,
 `docs/memory/CURRENT_STATE.md` (seção "Próxima grande frente"),
 `docs/memory/DATABASE.md` (schema ainda não tem tabela de agendamento).
+
+---
+
+### Decisão: primeira diferenciação de papel via RLS, pra viabilizar um login "vendedor" restrito à tela de Vendas (2026-09-07)
+
+**Motivo:** o usuário pediu uma tela de controle de vendas das camisas da
+surf trip, operada por uma pessoa que **não** deveria ter acesso ao resto do
+sistema (dados de aluno, saldo de aulas, financeiro). Até esta sessão, RLS
+era uma única policy por tabela (`auth.role() = 'authenticated'`) sem
+diferenciação nenhuma — `DECISIONS.md` já registrava que não era seguro dar
+login pra mais ninguém além do administrador até existir uma política mais
+granular (ver decisão "RLS simples" acima). Em vez de só esconder a
+navegação no app (o que não impediria alguém de ler/escrever direto via
+API), foi implementada uma diferenciação real no banco.
+
+**Impacto:** nova tabela `usuarios_perfis` (papel por usuário) + função
+`fn_papel_atual()` + policies reescritas em `alunos`/`movimentacoes`/
+`pacotes`/`configuracoes` exigindo `papel = 'admin'`. O papel `vendedor`
+passa em `authenticated` mas falha nessas 4 tabelas — só enxerga
+`pedidos_camisas`. Todo usuário existente virou `admin` automaticamente
+(sem quebrar acesso de quem já usava o sistema). Este é o primeiro passo
+concreto da pendência "RLS com diferenciação de papel" que já estava
+registrada como bloqueio antes de abrir acesso a outros tipos de usuário —
+não resolve o caso "aluno vendo só o próprio saldo" (esse continua
+pendente, precisa de RLS por linha, não só por papel), mas estabelece o
+mecanismo (`usuarios_perfis`/`fn_papel_atual()`) que a próxima frente
+(Área do Aluno) pode reaproveitar.
+
+**Arquivos relacionados:** `scripts/sql/2026-09-07-vendas-camisas.sql`,
+`docs/memory/DATABASE.md` (seção RLS), `docs/memory/BUSINESS_RULES.md`
+(seção Autenticação/autorização), `src/App.jsx` (leitura do papel),
+`src/lib/queries.js` (`fetchMeuPapel`).
+
+---
+
+### Decisão: `ModalPedidoCamisa.jsx` é um único componente pra criar E editar, diferente do padrão Novo/Editar separado de Aluno (2026-09-07)
+
+**Motivo:** `ModalNovoAluno.jsx`/`ModalEditarAluno.jsx` são separados porque
+o formulário de edição é menor (sem a parte de pacote inicial). No pedido de
+camisa, os campos são exatamente os mesmos nos dois modos (só muda se
+`pedido` vem preenchido ou não) — separar em dois componentes duplicaria o
+formulário inteiro sem ganhar nada.
+
+**Impacto:** um padrão novo convive com o antigo no projeto: pro próximo
+formulário parecido, avaliar se os campos realmente divergem entre
+criar/editar (aí separar, como Aluno) ou são idênticos (aí um componente só,
+como Pedido de camisa) — não é uma regra rígida, é escolha caso a caso.
+
+**Arquivos relacionados:** `src/components/ModalPedidoCamisa.jsx`.

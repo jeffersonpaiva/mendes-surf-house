@@ -11,11 +11,19 @@ import ModalPacote from './components/ModalPacote'
 import ModalBaixaAula from './components/ModalBaixaAula'
 import ModalBaixaLote from './components/ModalBaixaLote'
 import ModalHistorico from './components/ModalHistorico'
-import { fetchDashboardKpis, fetchRosterParaLote } from './lib/queries'
+import { fetchDashboardKpis, fetchRosterParaLote, fetchMeuPapel } from './lib/queries'
 
 export default function App() {
   const isDesktop = useIsDesktop()
   const [sessao, setSessao] = useState(undefined) // undefined = ainda carregando
+  // Papel do usuário logado ('admin' | 'vendedor', novo em 2026-09-07 — ver
+  // fetchMeuPapel em lib/queries.js). null enquanto ainda não foi lido.
+  // Controla a navegação (Dashboard/DashboardDesktop) e evita disparar
+  // fetchDashboardKpis/fetchRosterParaLote pro papel vendedor (RLS já
+  // bloqueia essas tabelas pra esse papel — ver
+  // scripts/sql/2026-09-07-vendas-camisas.sql — então nem vale a pena
+  // tentar, só gera erro no console à toa).
+  const [papel, setPapel] = useState(null)
   // `alunosParaLote`: lista completa (id/nome/saldo), só pra "Dar baixa em
   // lote" casar nomes colados do WhatsApp — a lista VISÍVEL do Dashboard
   // agora é paginada e busca seus próprios dados (ver Dashboard.jsx /
@@ -32,7 +40,7 @@ export default function App() {
 
   const [alunoSelecionado, setAlunoSelecionado] = useState(null)
   const [sheetAberto, setSheetAberto] = useState(null) // 'menuGeral' | 'aluno' | 'novoAluno' | 'editarAluno' | 'pacote' | 'baixa' | 'baixaLote' | 'historico'
-  const [tela, setTela] = useState('inicio') // 'inicio' | 'alunos' — controla o menu de navegação (bottom nav / sidebar)
+  const [tela, setTela] = useState('inicio') // 'inicio' | 'alunos' | 'vendas' — controla o menu de navegação (bottom nav / sidebar)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSessao(data.session))
@@ -40,12 +48,32 @@ export default function App() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
+  // Lê o papel assim que a sessão existe (e limpa ao deslogar). Feito à
+  // parte de `recarregar()` porque `recarregar()` precisa SABER o papel
+  // antes de decidir se busca ou não kpis/roster (que só admin pode ler).
+  useEffect(() => {
+    if (sessao) {
+      fetchMeuPapel().then(setPapel).catch(() => setPapel('admin'))
+    } else {
+      setPapel(null)
+    }
+  }, [sessao])
+
+  // Vendedor só existe pra ver a tela Vendas — força a navegação pra lá
+  // assim que o papel é conhecido (cobre o caso de login novo, que sempre
+  // começa com `tela === 'inicio'`).
+  useEffect(() => {
+    if (papel === 'vendedor') setTela('vendas')
+  }, [papel])
+
   const recarregar = useCallback(async () => {
     setCarregandoDados(true)
     try {
-      const [kpisCalculados, roster] = await Promise.all([fetchDashboardKpis(), fetchRosterParaLote()])
-      setKpis(kpisCalculados)
-      setAlunosParaLote(roster)
+      if (papel === 'admin') {
+        const [kpisCalculados, roster] = await Promise.all([fetchDashboardKpis(), fetchRosterParaLote()])
+        setKpis(kpisCalculados)
+        setAlunosParaLote(roster)
+      }
       setRefreshToken((t) => t + 1)
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
@@ -53,7 +81,7 @@ export default function App() {
       setCarregandoDados(false)
       setPrimeiraCargaCompleta(true)
     }
-  }, [])
+  }, [papel])
 
   useEffect(() => {
     if (sessao) recarregar()
@@ -79,12 +107,13 @@ export default function App() {
     atualizando: carregandoDados,
     refreshToken,
     tela,
-    onNavegar: setTela
+    onNavegar: setTela,
+    papel
   }
 
   return (
     <div className={isDesktop ? 'app-shell' : 'phone'}>
-      {carregandoDados && !primeiraCargaCompleta ? (
+      {(carregandoDados && !primeiraCargaCompleta) || papel === null ? (
         <div className="loading-screen">Carregando dados...</div>
       ) : isDesktop ? (
         <DashboardDesktop {...props} />

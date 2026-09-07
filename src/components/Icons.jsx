@@ -153,3 +153,22 @@ export function IconFilter(props) {
     </IconBase>
   )
 }
+
+/** Nav "Vendas" — camiseta (venda das camisas da surf trip). */
+export function IconShirt(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M8 3.5 4 6.5v4l2.5-1V20.5h11V9.5L20 10.5v-4l-4-3-1.2 1.6a3 3 0 0 1-4.6 0Z" />
+    </IconBase>
+  )
+}
+
+/** Status "Entregue" — círculo com check. */
+export function IconCheckCircle(props) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12.3 10.6 15 16 9" />
+    </IconBase>
+  )
+}
